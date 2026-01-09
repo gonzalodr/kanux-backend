@@ -10,7 +10,8 @@
     "dev:companies": "npm run dev --prefix microservices/ms-companies",
     "dev:subscriptions": "npm run dev --prefix microservices/ms-subscriptions",
     "dev:chat": "npm run dev --prefix microservices/ms-chat",
-    "dev:core": "concurrently       \"npm run dev:auth\"       \"npm run dev:profiles\"       \"npm run dev:challenges\"       \"npm run dev:companies\"       \"npm run dev:subscriptions\"       \"npm run dev:chat\""
+    "dev:gateway": "npm run dev --prefix microservices/ms-api-gateway",
+    "dev:all": "concurrently \"npm run dev:auth\" \"npm run dev:profiles\" \"npm run dev:challenges\" \"npm run dev:companies\" \"npm run dev:subscriptions\" \"npm run dev:gateway\""
   },
   "repository": {
     "type": "git",
