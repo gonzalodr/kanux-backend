@@ -12,8 +12,8 @@ The goal of this setup is to provide a **clear, scalable, and maintainable backe
 - **Language:** TypeScript
 - **Runtime:** Node.js
 - **Shared database:** Single database instance (not implemented yet will be added in a future user story))
-- **API Gateway:** Not implemented yet (will be added in a future user story)
-- **Communication:** Direct HTTP (for now)
+- **API Gateway:** Implemented (Express + http-proxy-middleware)
+- **Communication:** HTTP routed through API Gateway
 
 ---
 
@@ -28,7 +28,8 @@ KANUX-BACKEND/
 │   ├── ms-challenges/
 │   ├── ms-companies/
 │   ├── ms-subscriptions/
-│   └── ms-chat/
+│   ├── ms-chat/
+│   └── ms-api-gateway/
 │
 ├── .env.example
 ├── .gitignore
@@ -60,6 +61,24 @@ Each microservice:
 - Has its own `package.json`
 - Uses a shared TypeScript base configuration
 - Reads environment variables from the root `.env`
+
+---
+
+## API Gateway
+
+The backend uses an API Gateway as the single entry point for all client requests.
+
+The API Gateway is responsible for:
+
+- Routing requests to the appropriate microservice
+- Centralizing access to backend services
+- Handling service unavailability errors
+
+All client requests must go through the API Gateway.
+
+Detailed documentation can be found here:
+
+microservices/ms-api-gateway/README.md
 
 ---
 
@@ -100,7 +119,8 @@ npm install
 > ms-challenges \
 > ms-companies \
 > ms-subscriptions \
-> ms-chat
+> ms-chat \
+> ms-api-gateway
 
 **node_modules are not committed and must be installed locally.**
 
@@ -111,17 +131,7 @@ npm install
 From the root folder:
 
 ```bash
-npm run dev:core
-```
-
-> This command starts all backend microservices concurrently.
-
-#### 4.2 Run a single microservice
-
-Example:
-
-```bash
-npm run dev:auth
+npm run dev:all
 ```
 
 Available commands:
