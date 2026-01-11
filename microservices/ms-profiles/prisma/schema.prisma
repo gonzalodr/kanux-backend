@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model category {
+  id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String     @unique @db.VarChar
+  parent_child   String?    @db.Uuid
+  created_at     DateTime   @default(now()) @db.Timestamptz(6)
+  category       category?  @relation("categoryTocategory", fields: [parent_child], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_category category[] @relation("categoryTocategory")
+  skills         skills[]
+}
+
+model languages {
+  id               String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name             String             @unique @db.VarChar(100)
+  languages_talent languages_talent[]
+}
+
+model languages_talent {
+  id              String           @id(map: "languages_user_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_profile      String?          @db.Uuid
+  id_languages    String?          @db.Uuid
+  created_at      DateTime         @default(now()) @db.Timestamptz(6)
+  level           String           @db.VarChar
+  languages       languages?       @relation(fields: [id_languages], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "languages_user_id_languages_fkey")
+  talent_profiles talent_profiles? @relation(fields: [id_profile], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "languages_user_id_profile_fkey")
+}
+
+model skills {
+  id              BigInt          @id @default(autoincrement())
+  id_profile      String          @db.Uuid
+  id_category     String          @db.Uuid
+  created_at      DateTime        @default(now()) @db.Timestamptz(6)
+  level           String?         @db.VarChar
+  category        category        @relation(fields: [id_category], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  talent_profiles talent_profiles @relation(fields: [id_profile], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([id_profile, id_category])
+}
+
+model talent_profiles {
+  id                   String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id              String            @unique @db.Uuid
+  title                String?           @db.VarChar(150)
+  location             String?           @db.VarChar(100)
+  experience_level     String?           @db.VarChar(50)
+  education            String?
+  about                String?
+  profile_completeness Int?              @default(0)
+  created_at           DateTime?          @default(now()) @db.Timestamp(6)
+  contact              Json?
+  languages_talent     languages_talent[]
+  skills               skills[]
+  users                users             @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model users {
+  id              String           @id @db.Uuid
+  talent_profiles talent_profiles?
+}
