@@ -2,8 +2,16 @@ import { Request, Response } from "express";
 import { AuthService } from "../service/auth.service";
 import { EmailUtil } from "../../constants/userType";
 
+interface PreRegisterDTO {
+  email: string;
+  password: string;
+  confirmPassword: string;
+  userType: "talent" | "company";
+}
+
+
 export const preRegister = async (req: Request, res: Response) => {
-  const { userType, email,password, confirmPassword } = req.body;
+  const { userType, email,password, confirmPassword } = req.body as PreRegisterDTO;
 
   if (!userType) {
     return res.status(400).json({
@@ -34,15 +42,21 @@ export const preRegister = async (req: Request, res: Response) => {
     return res.status(200).json(result);
 
   } catch (error: any) {
-    if (error.message === "INVALID_USER_TYPE") {
-      return res.status(400).json({
-        error: "Tipo de usuario inválido. Use 'talent' o 'company'.",
-      });
-    }
-    if (error.message === "EMAIL_ALREADY_EXISTS") {
-      return res.status(400).json({
-        error: "El correo ya se encuentra asociado a una cuenta.",
-      });
+    switch (error.message) {
+      case "INVALID_USER_TYPE":
+        return res.status(400).json({
+          error: "Tipo de usuario inválido. Use 'talent' o 'company'.",
+        });
+
+      case "EMAIL_ALREADY_EXISTS":
+        return res.status(409).json({
+          error: "El correo ya se encuentra asociado a una cuenta.",
+        });
+
+      default:
+        return res.status(500).json({
+          error: "Error interno del MS-AUTH",
+        });
     }
 
     return res.status(500).json({
