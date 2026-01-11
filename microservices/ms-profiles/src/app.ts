@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import profilesRoutes from "./modules/profiles/profiles.routes";
 
 const app = express();
 
@@ -8,9 +9,11 @@ app.use(express.json());
 
 app.get("/health", (_req, res) => {
   res.json({
-    service: "ms-profiles",
-    status: "ok"
+    service: "ms-talent-profiles",
+    status: "ok",
   });
 });
+
+app.use("/profiles", profilesRoutes);
 
 export default app;
