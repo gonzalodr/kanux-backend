@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma";
 import { UpdateTalentProfileDto } from "./dto/update-talent-profile.dto";
+import { calculateProfileCompleteness } from "./profile-completeness.utils";
 
 export class ProfilesService {
   async updateMyProfile(userId: string, payload: UpdateTalentProfileDto) {
@@ -24,7 +25,8 @@ export class ProfilesService {
       opportunity_status_id,
     } = payload;
 
-    return prisma.talent_profiles.update({
+    // 1. Update profile data
+    const updatedProfile = await prisma.talent_profiles.update({
       where: { user_id: userId },
       data: {
         first_name,
@@ -47,5 +49,19 @@ export class ProfilesService {
         }),
       },
     });
+
+    // 2. Calculate profile completeness
+    const completeness = await calculateProfileCompleteness(updatedProfile.id);
+
+    // 3. Save profile completeness
+    const finalProfile = await prisma.talent_profiles.update({
+      where: { id: updatedProfile.id },
+      data: {
+        profile_completeness: completeness,
+      },
+    });
+
+    // 4. Return final profile
+    return finalProfile;
   }
 }
