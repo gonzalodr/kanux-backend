@@ -2,16 +2,9 @@ import { Request, Response } from "express";
 import { SkillsService } from "./skills.service";
 import { CreateSkillSchema } from "./dto/create-skill.dto";
 import { ZodError } from "zod";
+import { serializeBigInt } from "../../lib/serialize";
 
 const skillsService = new SkillsService();
-
-function serializeBigInt(data: any) {
-  return JSON.parse(
-    JSON.stringify(data, (_key, value) =>
-      typeof value === "bigint" ? value.toString() : value
-    )
-  );
-}
 
 export class SkillsController {
   async getMySkills(req: Request, res: Response) {
