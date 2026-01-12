@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import profilesRoutes from "./modules/profiles/profiles.routes";
+import skillsRoutes from "./modules/skills/skills.routes";
 
 const app = express();
 
@@ -15,5 +16,6 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/profiles", profilesRoutes);
+app.use("/skills", skillsRoutes);
 
 export default app;
