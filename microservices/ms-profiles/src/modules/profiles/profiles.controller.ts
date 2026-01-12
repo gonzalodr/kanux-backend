@@ -1,11 +1,32 @@
 import { Request, Response } from "express";
 import { ProfilesService } from "./profiles.service";
 import { UpdateTalentProfileSchema } from "./dto/update-talent-profile.dto";
+import { serializeBigInt } from "../../lib/serialize";
 import { ZodError } from "zod";
 
 const profilesService = new ProfilesService();
 
 export class ProfilesController {
+  async getMyProfile(req: Request, res: Response) {
+    try {
+      const userId = req.user!.id;
+      const profile = await profilesService.getMyProfile(userId);
+      res.json(serializeBigInt(profile));
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+
+  async getPublicTalentProfile(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const profile = await profilesService.getPublicTalentProfile(id);
+      res.json(serializeBigInt(profile));
+    } catch (error: any) {
+      res.status(404).json({ message: error.message });
+    }
+  }
+
   async updateMyProfile(req: Request, res: Response) {
     try {
       const userId = req.user!.id;
