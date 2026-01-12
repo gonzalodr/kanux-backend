@@ -14,6 +14,10 @@ export class CompanyService {
             const existingUser = await prisma.users.findFirst({where:{id: id_user}});
             if (!existingUser){throw new Error("The user does not exist.")}
             
+            //validate if existing talent user
+            const existingProfile = await prisma.talent_profiles.findFirst({where: {user_id: id_user}})
+            if(existingProfile) { throw new Error("The user already has a registered like talent."); }
+            
             // Validate if the base user already has a created or existing company
             const existingCompany = await prisma.company.findFirst({where: {id_user: id_user}});
             if (existingCompany) { throw new Error("The user already has a registered company."); }
