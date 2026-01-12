@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import companyRouters from './modules/company/routes/company.routes'
 
 const app = express();
 
@@ -12,5 +13,7 @@ app.get("/health", (_req, res) => {
     status: "ok"
   });
 });
+
+app.use('/company',companyRouters)
 
 export default app;
