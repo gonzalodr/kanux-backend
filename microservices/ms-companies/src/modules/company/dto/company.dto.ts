@@ -5,24 +5,23 @@ import { z } from "zod"
 * This scheme defines the typing of the received attributes,
 * including validations for length, URL format, and UUID data types.
 * @see {@link CreateCompanyDto} for the inferred TypeScript type.
+* Attributes:
+* @name Name of company note : minimum size 1 character and maximum size 255 characters
+* @about Detailed description of the company's activity or purpose.
+* @location Physical or fiscal address. note : maximum 255 characters. 
+* @contact A flexible record for contact details (e.g., social media, phone numbers).
+* @example : { "whatsapp": "+123456789", "linkedin": "company/url" }
+* @url_logo URL pointing to the company's logo. Must be a valid URL or an empty string.
+* @goal The company's short-term goal or vision. 
+* @id_user Unique identifier of the owner user (UUID format).
 */
 export const CreateCompanySchema = z.object({
-    /** * Name of company @note : minimum size 1 character and maximum size 255 characters*/
     name: z.string().min(1, "Name is required").max(255),
-    /** * Detailed description of the company's activity or purpose. */
     about: z.string().min(1, "About description is required"),
-    /** * Physical or fiscal address. @note : maximum 255 characters. */
     location: z.string().min(1,"Location is required").max(255),
-    /** * A flexible record for contact details (e.g., social media, phone numbers).
-    * @example : { "whatsapp": "+123456789", "linkedin": "company/url" }
-    */
     contact: z.record(z.string(), z.any()).optional(), 
-    /** * URL pointing to the company's logo. Must be a valid URL or an empty string.*/
     url_logo: z.url("Must be a valid URL").optional().or(z.literal("")),
-    /** The company's short-term goal or vision. */
     goal: z.string().optional(),
-    /** Unique identifier of the owner user (UUID format). */
-    id_user: z.uuid("Invalid user ID format"),
 });
 
 

@@ -10,6 +10,6 @@ const companyController = new CompanyController();
 * @group Companies - Registration/create operations
 * @param {CompanySchema} body.req - Object with the company's legal information
 */
-router.post("/",companyController.registerCompany.bind(companyController));
+router.post("/:id_user",companyController.registerCompany.bind(companyController));
 
 export default router;
