@@ -12,6 +12,8 @@ export class ProfilesService {
     }
 
     const {
+      first_name,
+      last_name,
       title,
       location,
       experience_level,
@@ -25,6 +27,8 @@ export class ProfilesService {
     return prisma.talent_profiles.update({
       where: { user_id: userId },
       data: {
+        first_name,
+        last_name,
         title,
         location,
         experience_level,
