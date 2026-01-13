@@ -9,5 +9,10 @@ const controller = new MessagesController();
 const auth = process.env.NODE_ENV === "production" ? authMiddleware : mockAuth;
 
 router.post("/", auth, controller.sendMessage.bind(controller));
+router.get(
+  "/conversations/:id",
+  auth,
+  controller.getConversationMessages.bind(controller)
+);
 
 export default router;

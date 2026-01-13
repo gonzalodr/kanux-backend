@@ -30,4 +30,23 @@ export class MessagesController {
       res.status(400).json({ message: error.message });
     }
   }
+
+  async getConversationMessages(req: Request, res: Response) {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { id } = req.params;
+
+      const data = await messagesServices.getConversationMessages(
+        req.user.id,
+        id
+      );
+
+      return res.status(200).json(data);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  }
 }
