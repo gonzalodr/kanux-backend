@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import messageRoutes from "./modules/messages/messages.routes";
+import conversationsRoutes from "./modules/conversations/conversations.routes";
 
 const app = express();
 
@@ -14,6 +14,6 @@ app.get("/health", (_req, res) => {
   });
 });
 
-app.use("/messages", messageRoutes);
+app.use("/conversations", conversationsRoutes);
 
 export default app;
