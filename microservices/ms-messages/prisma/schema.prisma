@@ -131,7 +131,7 @@ model conversations {
   talent_profiles talent_profiles? @relation(fields: [id_profile], references: [id], onDelete: NoAction, onUpdate: NoAction)
   messages        messages[]
 
-  @@unique([company_id, id_profile], map: "conversations_company_profile_unique")
+  @@unique([company_id, id_profile], name:"conversations_company_profile_unique" ,map: "conversations_company_profile_unique")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
