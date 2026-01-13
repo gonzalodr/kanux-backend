@@ -35,4 +35,21 @@ export class ConversationsController {
       res.status(400).json({ message: error.message });
     }
   }
+
+  async getUserConversations(req: Request, res: Response) {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const userId = req.user.id;
+      const conversations = await conversationsService.getUserConversations(
+        userId
+      );
+
+      res.status(200).json(conversations);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  }
 }

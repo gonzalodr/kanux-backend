@@ -9,5 +9,6 @@ const controller = new ConversationsController();
 const auth = process.env.NODE_ENV === "production" ? authMiddleware : mockAuth;
 
 router.post("/", auth, controller.createConversation.bind(controller));
+router.get("/", auth, controller.getUserConversations.bind(controller));
 
 export default router;
