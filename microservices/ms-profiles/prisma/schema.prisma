@@ -81,7 +81,7 @@ model users {
   password_hash   String
   user_type       String           @db.VarChar(20)
   created_at      DateTime?        @default(now()) @db.Timestamp(6)
-  company         company[]
+  company         company?
   talent_profiles talent_profiles?
 }
 
@@ -130,14 +130,14 @@ model company {
   id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name                  String?                 @db.VarChar
   about                 String?
-  id_user               String?                 @db.Uuid
+  id_user               String                  @unique @db.Uuid
   location              String?                 @db.VarChar
   contact               Json?
   url_logo              String?
   goal                  String?
   created_at            DateTime                @default(now()) @db.Timestamptz(6)
   challenges            challenges[]
-  users                 users?                  @relation(fields: [id_user], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users                 users                   @relation(fields: [id_user], references: [id], onDelete: NoAction, onUpdate: NoAction)
   company_plan_usage    company_plan_usage[]
   company_subscriptions company_subscriptions[]
   conversations         conversations[]
