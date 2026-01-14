@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import feedRoutes from "./module/feed/routes/feed.routes"
+import commentRoutes from "./module/comment/routes/comment.route"
+import reactionRoute from "./module/reaction/routes/reaction.route"
 
 const app = express();
 
@@ -15,5 +17,7 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/feed",feedRoutes);
+app.use("/feed",commentRoutes);
+app.use("/feed",reactionRoute);
 
 export default app;
