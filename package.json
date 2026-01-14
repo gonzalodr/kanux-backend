@@ -9,9 +9,10 @@
     "dev:challenges": "npm run dev --prefix microservices/ms-challenges",
     "dev:companies": "npm run dev --prefix microservices/ms-companies",
     "dev:subscriptions": "npm run dev --prefix microservices/ms-subscriptions",
+    "dev:feed": "npm run dev --prefix microservices/ms-feed",
     "dev:messages": "npm run dev --prefix microservices/ms-messages",
     "dev:gateway": "npm run dev --prefix microservices/ms-api-gateway",
-    "dev:all": "concurrently \"npm run dev:auth\" \"npm run dev:profiles\" \"npm run dev:challenges\" \"npm run dev:companies\" \"npm run dev:subscriptions\" \"npm run dev:messages\" \"npm run dev:gateway\""
+    "dev:all": "concurrently \"npm run dev:auth\" \"npm run dev:profiles\" \"npm run dev:challenges\" \"npm run dev:companies\" \"npm run dev:subscriptions\" \"npm run dev:messages\" \"npm run dev:feed\" \"npm run dev:gateway\""
   },
   "repository": {
     "type": "git",
