@@ -18,12 +18,24 @@ export class CompanyController {
             if (!id_user || !z.uuid().safeParse(id_user).success) {
                 return res.status(400).json({ message: "A valid UUID for Company ID is required" });
             }
+            const bodyData = { ...req.body };
 
-            //validate with zod scheme 
-            const validateCompany = CreateCompanySchema.parse(req.body);
+            //if contact is string parse to json
+            if (typeof bodyData.contact === 'string') {
+                try {
+                    bodyData.contact = JSON.parse(bodyData.contact);
+                } catch (e) {
+                    return res.status(400).json({ message: "Invalid format for contact field" });
+                }
+            }
+
+            // validate with zod scheme 
+            const validateCompany = CreateCompanySchema.parse(bodyData);
+            // //validate with zod scheme 
+            // const validateCompany = CreateCompanySchema.parse(req.body);
 
             // send to services to register
-            const result = await this.companyService.registerCompany(id_user,validateCompany);
+            const result = await this.companyService.registerCompany(id_user,validateCompany,req.file?.buffer);
             
             // response
             return res.status(200).json({ data: result.company, token: result.token });
