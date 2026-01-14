@@ -3,13 +3,11 @@ import { Router } from "express";
 import { Socket } from "net";
 
 interface ServiceProxyConfig {
-  basePath: string;
   target: string | undefined;
   serviceName: string;
 }
 
 export function createServiceProxy({
-  basePath,
   target,
   serviceName,
 }: ServiceProxyConfig): Router {
@@ -23,11 +21,17 @@ export function createServiceProxy({
     createProxyMiddleware({
       target,
       changeOrigin: true,
-      pathRewrite: {
-        [`^${basePath}`]: "",
-      },
+
       on: {
+        proxyReq(proxyReq, req) {
+          console.log(
+            `[Gateway → ${serviceName}] ${req.method} ${req.originalUrl}`
+          );
+        },
+
         error(err, req, res) {
+          console.error(`[${serviceName}] Proxy error:`, err.message);
+
           if (res instanceof Socket) {
             res.end();
             return;

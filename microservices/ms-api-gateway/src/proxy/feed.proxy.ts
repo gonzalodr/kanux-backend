@@ -1,6 +1,7 @@
 import { createServiceProxy } from "./createServiceProxy";
 
 export default createServiceProxy({
-  target: process.env.MS_PROFILES_URL,
-  serviceName: "Profiles",
+  basePath: "/feed",
+  target: process.env.MS_FEED_URL,
+  serviceName: "Feed",
 });

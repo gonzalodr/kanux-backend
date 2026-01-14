@@ -9,6 +9,7 @@ const requiredEnv = [
   "MS_COMPANIES_URL",
   "MS_SUBSCRIPTIONS_URL",
   "MS_CHATS_URL",
+  "MS_FEED_URL",
 ];
 
 requiredEnv.forEach((key) => {

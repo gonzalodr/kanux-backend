@@ -6,6 +6,7 @@ import challengesProxy from "./proxy/challenges.proxy";
 import companiesProxy from "./proxy/companies.proxy";
 import subscriptionsProxy from "./proxy/subscriptions.proxy";
 import chatProxy from "./proxy/chat.proxy";
+import feedProxy from "./proxy/feed.proxy";
 
 const router = Router();
 
@@ -15,5 +16,6 @@ router.use("/challenges", challengesProxy);
 router.use("/companies", companiesProxy);
 router.use("/subscriptions", subscriptionsProxy);
 router.use("/chat", chatProxy);
+router.use("/feed", feedProxy);
 
 export default router;
