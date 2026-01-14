@@ -42,6 +42,44 @@ export class FeedController {
     }
   }
 
+  async updatePost(req: Request, res: Response) {
+    try {
+      const userId = req.user!.userId;
+      const { postId } = req.params;
+
+      const payload = CreatePostSchema.parse(req.body);
+
+      const updatedPost = await feedService.updatePost(userId, postId, payload);
+
+      res.status(200).json({
+        message: "Publicacion actualizada correctamente.",
+        data: updatedPost,
+      });
+
+    } catch (error: any) {
+      if (error instanceof ZodError) {
+        return res.status(422).json({
+          message: "Validation error",
+          errors: error.issues.map((e) => ({
+            field: e.path.join("."),
+            message: e.message,
+          })),
+        });
+      }
+
+      if (error.message === "POST_NOT_FOUND") {
+        return res.status(404).json({ message: "Post no encontrado" });
+      }
+
+      if (error.message === "UNAUTHORIZED_ACTION") {
+        return res.status(403).json({ message: "No autorizado para actualizar esta publicacion" });
+      }
+
+      res.status(500).json({ message: "Unexpected error" });
+    }
+  }
+
+
  async deletePost(req: Request, res: Response) {
     try {
       const userId = req.user!.userId;

@@ -30,6 +30,32 @@ export class FeedService {
     });
   }
 
+  async updatePost(userId: string, postId: string, payload: CreatePostDto) {
+
+  const post = await prisma.posts.findUnique({
+    where: { id: postId },
+  });
+
+  if (!post) {
+    throw new Error("POST_NOT_FOUND");
+  }
+
+
+  if (post.id_profile !== userId) {
+    throw new Error("UNAUTHORIZED_ACTION");
+  }
+
+  const updatedPost = await prisma.posts.update({
+    where: { id: postId },
+    data: {
+      content: payload.content,
+    },
+  });
+
+  return updatedPost;
+}
+
+
    async deletePost(userId: string, postId: string) {
    
     const post = await prisma.posts.findUnique({

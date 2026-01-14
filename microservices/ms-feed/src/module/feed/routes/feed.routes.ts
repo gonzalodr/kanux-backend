@@ -19,4 +19,6 @@ router.get("/my-post",auth,controller.getMyPosts.bind(controller));
 
 router.get("/all-posts",auth,controller.getAllPosts.bind(controller));
 
+router.put("/:postId/update", auth, controller.updatePost.bind(controller));
+
 export default router;
