@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import feedRoutes from "./module/feed/routes/feed.routes"
 
 const app = express();
 
@@ -12,5 +13,7 @@ app.get("/health", (_req, res) => {
     status: "ok",
   });
 });
+
+app.use("/feed",feedRoutes);
 
 export default app;
