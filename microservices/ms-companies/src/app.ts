@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import companyRouters from './modules/company/routes/company.routes'
+import companyRouters from "./modules/company/routes/company.routes";
 
 const app = express();
 
@@ -10,11 +10,11 @@ app.use(express.json());
 app.get("/health", (_req, res) => {
   res.json({
     service: "ms-companies",
-    status: "ok"
+    status: "ok",
   });
 });
 
-app.use('/company',companyRouters)
+app.use("/", companyRouters);
 //app.use('company/metrics')
 //app.use('company/talent')
 //app.use('company/contact')
