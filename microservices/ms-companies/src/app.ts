@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import companyRouters from './modules/company/routes/company.routes'
+import talentRouters from './modules/talent/routes/talent.routes'
 
 const app = express();
 
@@ -16,7 +17,7 @@ app.get("/health", (_req, res) => {
 
 app.use('/company',companyRouters)
 //app.use('company/metrics')
-//app.use('company/talent')
+app.use('company/talent',talentRouters)
 //app.use('company/contact')
 
 export default app;
