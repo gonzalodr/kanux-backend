@@ -1,5 +1,9 @@
 import express from "express";
 import cors from "cors";
+import profilesRoutes from "./modules/profiles/profiles.routes";
+import skillsRoutes from "./modules/skills/skills.routes";
+import languagesRoutes from "./modules/languages/languages.routes";
+import catalogsRoutes from "./modules/catalogs/catalogs.routes";
 
 const app = express();
 
@@ -8,9 +12,14 @@ app.use(express.json());
 
 app.get("/health", (_req, res) => {
   res.json({
-    service: "ms-profiles",
-    status: "ok"
+    service: "ms-talent-profiles",
+    status: "ok",
   });
 });
+
+app.use("/profiles", profilesRoutes);
+app.use("/profiles", catalogsRoutes);
+app.use("/skills", skillsRoutes);
+app.use("/languages", languagesRoutes);
 
 export default app;
