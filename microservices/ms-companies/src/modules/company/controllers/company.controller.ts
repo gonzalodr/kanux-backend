@@ -11,17 +11,12 @@ export class CompanyController {
 
     async registerCompany(req: Request, res: Response) {
         try {
-            //get user id params
+            //get company id params
             const { id_user } = req.params;
 
-            //validate id_user format
-            if (!id_user || id_user.trim() === "") {
-                return res.status(400).json({ message: "User ID is required in the URL parameters"});
-            }
-
-            //validate if is a uuid format
-            if (!z.uuid().safeParse(id_user).success) {
-                return res.status(400).json({ message: "The provided User ID is not a valid UUID" });
+            //validate if company id is a uuid format
+            if (!id_user || !z.uuid().safeParse(id_user).success) {
+                return res.status(400).json({ message: "A valid UUID for Company ID is required" });
             }
 
             //validate with zod scheme 
@@ -29,8 +24,9 @@ export class CompanyController {
 
             // send to services to register
             const result = await this.companyService.registerCompany(id_user,validateCompany);
-
-            return res.status(200).json({ success:true, data: result });
+            
+            // response
+            return res.status(200).json({ data: result.company, token: result.token });
 
         } catch (error:any) {
             if (error instanceof ZodError) {
@@ -43,7 +39,7 @@ export class CompanyController {
                     ),
                 });
             }
-            res.status(500).json({message: error.message || "Internal server error"});
+            res.status(400).json({message: error.message || "Internal server error"});
         }
 
     }

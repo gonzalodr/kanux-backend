@@ -6,14 +6,14 @@ import { z } from "zod"
 * including validations for length, URL format, and UUID data types.
 * @see {@link CreateCompanyDto} for the inferred TypeScript type.
 * Attributes:
-* @name Name of company note : minimum size 1 character and maximum size 255 characters
-* @about Detailed description of the company's activity or purpose.
-* @location Physical or fiscal address. note : maximum 255 characters. 
-* @contact A flexible record for contact details (e.g., social media, phone numbers).
-* @example : { "whatsapp": "+123456789", "linkedin": "company/url" }
-* @url_logo URL pointing to the company's logo. Must be a valid URL or an empty string.
-* @goal The company's short-term goal or vision. 
-* @id_user Unique identifier of the owner user (UUID format).
+* @param name Name of company note : minimum size 1 character and maximum size 255 characters
+* @param about Detailed description of the company's activity or purpose.
+* @param location Physical or fiscal address. note : maximum 255 characters. 
+* @param contact A flexible record for contact details (e.g., social media, phone numbers).
+* @param example : { "whatsapp": "+123456789", "linkedin": "company/url" }
+* @param url_logo URL pointing to the company's logo. Must be a valid URL or an empty string.
+* @param goal The company's short-term goal or vision. 
+* @param id_user Unique identifier of the owner user (UUID format).`delete param`
 */
 export const CreateCompanySchema = z.object({
     name: z.string().min(1, "Name is required").max(255),

@@ -1,29 +1,20 @@
 import { prisma } from "../../../lib/prisma";
 import { CreateCompanyDto, UpdateCompanyDto } from "../dto/company.dto";
-import axios from 'axios'
+import { JwtUtil, JwtPayload } from "../../../utility/jwt.utility";
 
 export class CompanyService {
 
-    async registerCompany(id_user:string,data: CreateCompanyDto) {
-
+    /**
+     * method that registers the company with all the requested data
+     * @param id_company 
+     * @param data 
+     * @returns Promise<?>
+     */
+    async registerCompany(id_user: string, data: CreateCompanyDto) {
         try {
-            //Check if the base user is valid or already registered
-            // const authServiceUrl = process.env.AUTH_SERVICE_URL || "http://ms-auth:3000";
-            // const userResponse   = await axios.get(`${authServiceUrl}/users/${id_user}`);
-            
-            const existingUser = await prisma.users.findFirst({where:{id: id_user}});
-            if (!existingUser){throw new Error("The user does not exist.")}
-            
-            //validate if existing talent user
-            const existingProfile = await prisma.talent_profiles.findFirst({where: {user_id: id_user}})
-            if(existingProfile) { throw new Error("The user already has a registered like talent."); }
-            
-            // Validate if the base user already has a created or existing company
-            const existingCompany = await prisma.company.findFirst({where: {id_user: id_user}});
-            if (existingCompany) { throw new Error("The user already has a registered company."); }
-            
-            // create company to base user
-            const company = await prisma.company.create({
+            //We update and bring the related user in a single step
+            const result = await prisma.company.update({
+                where: { id_user: id_user },
                 data: {
                     name: data.name,
                     about: data.about,
@@ -31,22 +22,36 @@ export class CompanyService {
                     contact: data.contact,
                     url_logo: data.url_logo,
                     goal: data.goal,
-                    id_user: id_user
+                },
+                include: {
+                    users: {
+                        select: {
+                            id: true,
+                            email: true,
+                            user_type: true,
+                        }
+                    }// include users data to create token
                 }
-            })
-            /** simulation token */
-            const token = "token-simulated";
-            return { company, token }
+            });
 
-        } catch(error:any) {
-            if (error.response && error.response.status === 400) {
-                throw new Error("The base user does not exist in the authentication system.");
-            }
+            const { users, ...company } = result;
+
+            // validation if user is null
+            if (!users) { throw new Error("The associated user was not found."); }
+
+            const payload: JwtPayload = {
+                userId: users.id,
+                email: users.email,
+                userType: users.user_type
+            };
+
+            const token = JwtUtil.generateToken(payload);
+
+            return { company, token };
+
+        } catch (error: any) {
+            if (error.code === 'P2025') { throw new Error("The company record does not exist."); }
             throw new Error(error.message || "Error processing the record.");
         }
-    }
-
-    async updateCompany(id_company:string, data: UpdateCompanyDto){
-        return ({succes: true})
     }
 }
