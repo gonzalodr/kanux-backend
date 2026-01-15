@@ -1,4 +1,4 @@
-import { Request, response, Response } from "express";
+import { Request, Response } from "express";
 import { ContactService } from "../services/contact.service";
 import z from "zod";
 
@@ -14,7 +14,7 @@ export class ContactController{
         try{
             const {id_company,id_talent} = req.params;
 
-            if (!id_talent || !z.uuid().safeParse(id_talent).success) {
+            if (!id_company || !z.uuid().safeParse(id_company).success) {
                 return res.status(400).json({ message: "A valid UUID for Company ID is required" });
             }
             if (!id_talent || !z.uuid().safeParse(id_talent).success) {
