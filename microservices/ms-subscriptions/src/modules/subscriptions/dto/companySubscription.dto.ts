@@ -1,11 +1,5 @@
 import { z } from 'zod';
-
-export enum SubscriptionStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  PENDING = 'pending',
-  EXPIRED = 'expired',
-}
+import { SubscriptionStatus } from '../enums/subscriptionStatus.enum';
 
 export const CreateCompanySubscriptionSchema = z
   .object({
