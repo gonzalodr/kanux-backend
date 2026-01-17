@@ -2,7 +2,7 @@ import { prisma } from "../../../lib/prisma";
 import { CreateCompanySubscriptionDto } from "../dto/companySubscription.dto";
 import { CreateTalentSubscriptionDto } from "../dto/talentSubscription.dto";
 import { SubscriptionStatus } from "../enums/subscriptionStatus.enum";
-import { CompanyActionType } from "../enums/actiontype.enum";
+import { CompanyActionType } from "../enums/actionType.enum";
 
 export class SubscriptionServices {
     async subscribeCompany(id_company: string, plan_id: string, data: CreateCompanySubscriptionDto) {
@@ -53,7 +53,7 @@ export class SubscriptionServices {
             }
         });
     }
-    
+
     async validateActionOfCompany(id_company: string, actionType: string) {
         const [subscription, usage] = await Promise.all([
             prisma.company_subscriptions.findFirst({
@@ -92,7 +92,7 @@ export class SubscriptionServices {
         // validate with type action
         const validations: Record<string, { allowed: boolean; reason?: string }> = {
             [CompanyActionType.VIEW_PROFILE]: {
-                allowed: usage.profile_views_used && features.max_profile_views_per_month ? usage.profile_views_used < features.max_profile_views_per_month : false,
+                allowed: usage.profile_views_used !== null && features.max_profile_views_per_month!== null ? usage.profile_views_used < features.max_profile_views_per_month : false,
                 reason: 'MAX_PROFILE_VIEWS_REACHED'
             },
             [CompanyActionType.CONTACT_TALENT]: {
@@ -100,15 +100,15 @@ export class SubscriptionServices {
                 reason: 'FEATURE_NOT_IN_PLAN'
             },
             [CompanyActionType.ADVANCED_FILTERS]: {
-                allowed: features.can_use_advanced_filters ? features.can_use_advanced_filters : false,
+                allowed: features.can_use_advanced_filters!== null ? features.can_use_advanced_filters : false,
                 reason: 'FEATURE_NOT_IN_PLAN'
             },
             [CompanyActionType.CREATE_CHALLENGE]: {
-                allowed: features.can_create_custom_challenges ? features.can_create_custom_challenges : false,
+                allowed: features.can_create_custom_challenges!== null ? features.can_create_custom_challenges : false,
                 reason: 'FEATURE_NOT_IN_PLAN'
             },
             [CompanyActionType.ACCESS_METRICS]: {
-                allowed: features.can_access_metrics ? features.can_access_metrics : false,
+                allowed: features.can_access_metrics!== null ? features.can_access_metrics : false,
                 reason: 'FEATURE_NOT_IN_PLAN'
             }
         };
@@ -121,7 +121,49 @@ export class SubscriptionServices {
         }
         return {
             allowed: result.allowed,
-            reason: result.allowed ? null : result.reason,
+            reason: result.allowed ? `Allowed action: ${actionType} ` : result.reason,
         };
+    }
+
+    async incrementProfileViewUsage(id_company: string) {
+        const currentUsage = await prisma.company_plan_usage.findFirst({
+            where: {
+                company_id: id_company,
+                period_end: { gte: new Date() }
+            }
+        });
+
+        if (!currentUsage) {
+            throw new Error("No active usage record found for this company or period has expired.");
+        }
+        return await prisma.company_plan_usage.updateMany({
+            where: { 
+                company_id: id_company,
+            },
+            data: {
+                profile_views_used: { increment: 1 }
+            }
+        });
+    }
+
+    async incrementChallengeUsage(id_company: string) {
+        const currentUsage = await prisma.company_plan_usage.findFirst({
+            where: {
+                company_id: id_company,
+                period_end: { gte: new Date() }
+            }
+        });
+
+        if (!currentUsage) {
+            throw new Error("Cannot increment usage: Company usage record not found or expired.");
+        }
+        return await prisma.company_plan_usage.updateMany({
+            where: { 
+                company_id: id_company,
+            },
+            data: {
+                challenges_created: { increment: 1 }
+            }
+        });
     }
 }

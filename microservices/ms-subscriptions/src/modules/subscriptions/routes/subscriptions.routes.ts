@@ -9,4 +9,11 @@ router.post("/company/:id_company/plan/:id_plan",subscriptionController.subscrib
  * Query Params: ?action=VIEW_PROFILE
  */
 router.get("/company/:id_company/validate", subscriptionController.validateActionCompany.bind(subscriptionController));
+
+//increment profile view
+router.patch("/company/:id_company/usage/profile-view", subscriptionController.incrementProfileView.bind(subscriptionController));
+
+// increment challenge
+router.patch("/company/:id_company/usage/challenge", subscriptionController.incrementChallenge.bind(subscriptionController));
+
 export default router;

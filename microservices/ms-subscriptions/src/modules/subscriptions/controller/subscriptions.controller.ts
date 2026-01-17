@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { SubscriptionServices } from "../services/subscriptions.service";
 import { CreateCompanySubscriptionSchema } from "../dto/companySubscription.dto";
 import { CreateTalentSubscriptionSchema } from "../dto/talentSubscription.dto";
-import { CompanyActionType } from "../enums/actiontype.enum";
+import { CompanyActionType } from "../enums/actionType.enum";
 import { z } from 'zod'
 
 export class SubscriptionController {
@@ -104,31 +104,31 @@ export class SubscriptionController {
 
       // Validate Path Parameters
       if (!z.uuid().safeParse(id_company).success) {
-        return res.status(400).json({success: false,message: "A valid UUID for Company ID is required"});
+        return res.status(400).json({ success: false, message: "A valid UUID for Company ID is required" });
       }
 
       // Validate Query Parameters
       if (!action) {
-        return res.status(400).json({success: false,message: "Action type is required as a query parameter"});
+        return res.status(400).json({ success: false, message: "Action type is required as a query parameter" });
       }
 
       // Validate typeSubscription
       const isValidAction = Object.values(CompanyActionType).includes(action as CompanyActionType);
 
       if (!isValidAction) {
-        return res.status(400).json({success: false,reason: 'INVALID_ACTION_TYPE',message: `The action '${action}' is not recognized by the system. Allowed values are: ${Object.values(CompanyActionType).join(', ')}`});
+        return res.status(400).json({ success: false, reason: 'INVALID_ACTION_TYPE', message: `The action '${action}' is not recognized by the system. Allowed values are: ${Object.values(CompanyActionType).join(', ')}` });
       }
 
       // consult to services
-      const result = await this.subscribtionServices.validateActionOfCompany(id_company,action as CompanyActionType);
+      const result = await this.subscribtionServices.validateActionOfCompany(id_company, action as CompanyActionType);
 
       // Handle Business response 
       if (!result.allowed) {
-        return res.status(403).json({success: false, ...result});
+        return res.status(403).json({ success: false, ...result });
       }
 
       // success Response
-      return res.status(200).json({success: true,...result});
+      return res.status(200).json({ success: true, ...result });
 
     } catch (error: any) {
       // Zod Error Handling 
@@ -142,7 +142,39 @@ export class SubscriptionController {
           }))
         });
       }
-      return res.status(500).json({success: false,reason: 'INTERNAL_SERVER_ERROR',message: 'An unexpected error occurred while processing the validation.'});
+      return res.status(500).json({ success: false, reason: 'INTERNAL_SERVER_ERROR', message: 'An unexpected error occurred while processing the validation.' });
+    }
+  }
+
+  async incrementProfileView(req: Request, res: Response) {
+    try {
+      const { id_company } = req.params;
+
+      if (!z.uuid().safeParse(id_company).success) {
+        return res.status(400).json({ success: false, message: "A valid UUID for Company ID is required" });
+      }
+
+      await this.subscribtionServices.incrementProfileViewUsage(id_company);
+
+      return res.status(200).json({success: true,message: "Profile view count incremented successfully"});
+    } catch (error: any) {
+      return res.status(500).json({success: false,message: error.message || "Failed to increment profile view usage"});
+    }
+  }
+
+  async incrementChallenge(req: Request, res: Response) {
+    try {
+      const { id_company } = req.params;
+
+      if (!z.uuid().safeParse(id_company).success) {
+        return res.status(400).json({ success: false, message: "A valid UUID for Company ID is required" });
+      }
+
+      await this.subscribtionServices.incrementChallengeUsage(id_company);
+
+      return res.status(200).json({success: true,message: "Challenge count incremented successfully"});
+    } catch (error: any) {
+      return res.status(500).json({success: false,message: error.message || "Failed to increment challenge usage"});
     }
   }
 }
