@@ -17,8 +17,8 @@ app.get("/health", (_req, res) => {
   });
 });
 
-app.use("/profiles", profilesRoutes);
-app.use("/profiles", catalogsRoutes);
+app.use("/", profilesRoutes);
+app.use("/", catalogsRoutes);
 app.use("/skills", skillsRoutes);
 app.use("/languages", languagesRoutes);
 

@@ -13,7 +13,7 @@ app.use(express.json());
 app.get("/health", (_req, res) => {
   res.json({
     service: "ms-companies",
-    status: "ok"
+    status: "ok",
   });
 });
 
