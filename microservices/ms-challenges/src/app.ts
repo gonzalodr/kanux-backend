@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import softChallengesRoutes from "./modules/soft-challenges/soft-challenges.routes";
+import technicalRoutes from "./modules/Technical-challenges/challenge.route";
+
 
 const app = express();
 
@@ -15,5 +17,6 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/soft-challenges", softChallengesRoutes);
+app.use("/technical-challenges", technicalRoutes);
 
 export default app;
