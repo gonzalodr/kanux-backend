@@ -10,5 +10,6 @@ const auth = process.env.NODE_ENV === "production" ? authMiddleware : mockAuth;
 
 router.get("/", controller.listChallenges.bind(controller));
 router.get("/:id", auth, controller.getChallenge.bind(controller));
+router.post("/:id/submit", auth, controller.submitChallenge.bind(controller));
 
 export default router;
