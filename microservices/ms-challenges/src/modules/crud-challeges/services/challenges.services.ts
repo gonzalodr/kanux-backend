@@ -332,7 +332,7 @@ export class ChallengesServices {
                 where: { id: id_submission },
                 data: {
                     score: randomScore,
-                    status: 'evaluated'
+                    status: 'evaluada'
                 }
             });
 

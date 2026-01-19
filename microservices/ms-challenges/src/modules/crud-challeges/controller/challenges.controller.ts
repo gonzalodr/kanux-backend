@@ -23,7 +23,7 @@ export class ChallengesController {
     async createChallenges(req: Request, res: Response) {
         try {
             const { id_company } = req.params;
-            console.log(id_company)
+
 
             if (id_company && !z.uuid().safeParse(id_company).success) {
                 return res.status(400).json({ message: "A valid UUID for Company ID is required" });
@@ -267,8 +267,6 @@ export class ChallengesController {
             if (!z.uuid().safeParse(id_company).success) {
                 return res.status(400).json({ message: "A valid UUID for Company ID is required" });
             }
-            console.log(id_company)
-
             // call services
             const result = await this.challengesServices.getChallengeSubmissions(id_challenge,id_company);
 
