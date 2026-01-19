@@ -258,6 +258,36 @@ export class ChallengesController {
             this.handleError(res, error);
         }
     }
+
+    async getSubmissionsByChallenge(req: Request, res: Response){
+        try {
+            const { id_challenge, id_company } = req.params;
+
+            // validate type
+            if (!z.uuid().safeParse(id_company).success) {
+                return res.status(400).json({ message: "A valid UUID for Company ID is required" });
+            }
+            console.log(id_company)
+
+            // call services
+            const result = await this.challengesServices.getChallengeSubmissions(id_challenge,id_company);
+
+            // 
+            if (result.length === 0) {
+                return res.status(200).json({
+                    success: true,
+                    message: "No submissions found for this challenge",
+                    data: []
+                });
+            }
+
+            // 4
+            return res.status(200).json({success: true,message: "Challenge submissions retrieved successfully",data: result});
+
+        } catch (error: any) {
+            this.handleError(res, error);
+        }
+    }
     // =========================
     // handle error
     // ========================

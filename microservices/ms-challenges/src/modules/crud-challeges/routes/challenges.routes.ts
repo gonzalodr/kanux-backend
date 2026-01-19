@@ -18,6 +18,9 @@ router.get("/", challengeController.getChallenges.bind(challengeController));
 // /uuid-empresa?page=2&limit=10
 router.get("/:id_company",auth, challengeController.getChallenges.bind(challengeController));
 
+// get challenge whith sumision
+router.get("/:id_challenge/submissions/:id_company",auth,challengeController.getSubmissionsByChallenge.bind(challengeController));
+
 //update challenge
 router.patch("/:challengeId",challengeController.updateChallengeBase.bind(challengeController));
 router.patch("/:challengeId/company/:id_company",auth,challengeController.updateChallengeBase.bind(challengeController));
