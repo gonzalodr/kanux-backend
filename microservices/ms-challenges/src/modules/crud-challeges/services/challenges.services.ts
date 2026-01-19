@@ -90,7 +90,7 @@ export class ChallengesServices {
             });
         });
     }
-    
+
     async updateChallengeBase(challengeId: string, id_company: string | undefined, data: ChallengeBaseUpdateDto) {
         return prisma.$transaction(async (tx) => {
             await validateChallengeOwnership(tx, challengeId, id_company);

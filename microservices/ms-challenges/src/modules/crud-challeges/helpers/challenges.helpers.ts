@@ -23,8 +23,7 @@ export async function validateFromQuestion(tx: any,questionId: string,id_company
 
   if (!question) {throw new Error("Question not found");}
   const challenge = question.non_technical_challenges.challenges;
-  if (id_company && challenge.created_by_company && challenge.created_by_company !== id_company
-  ) {
+  if (id_company && challenge.created_by_company && challenge.created_by_company !== id_company) {
     throw new Error("Unauthorized: You do not have permission to edit this challenge");
   }
   return { question, challenge };
