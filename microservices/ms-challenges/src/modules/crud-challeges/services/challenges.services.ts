@@ -198,7 +198,6 @@ export class ChallengesServices {
         });
     }
 
-
     async getChallengesByCompany(id_company?: string, page: number = 1, limit: number = 10) {
         // calculate position register
         const skip = (page - 1) * limit;
@@ -261,5 +260,45 @@ export class ChallengesServices {
                 total_pages: Math.ceil(totalCount / limit),
             }
         };
+    }
+    //b32dd184-e81f-4cc4-b72b-bbea0635af15
+    async getChallengeSubmissions(id_challenge: string, id_company: string) {
+        const validateCompany = await prisma.company.findUnique({ where: { id: id_company } });
+        if (!validateCompany) throw new Error("Company not found");
+
+        const challenge = await prisma.challenges.findUnique({
+            where: { id: id_challenge },
+            select: { created_by_company: true }
+        });
+
+        if (!challenge) {
+            throw new Error("Challenge not found");
+        }
+
+        if (id_company && challenge.created_by_company !== id_company) {
+            throw new Error("Unauthorized: This challenge does not belong to your company");
+        }
+
+        const challenge_submissions = await prisma.challenge_submissions.findMany({
+            where: { challenge_id: id_challenge },
+            include: {
+                talent_profiles: {
+                    select: {
+                        first_name: true,
+                        last_name: true
+                    }
+                }
+            },
+            orderBy: {
+                score: 'desc'
+            }
+        });
+        return challenge_submissions.map(sub => ({
+            talent_name: `${sub.talent_profiles?.first_name}`,
+            score: sub.score,
+            resolution_date: sub.created_at,
+            status: sub.status,
+            evaluation_type: sub.evaluation_type
+        }));
     }
 }
