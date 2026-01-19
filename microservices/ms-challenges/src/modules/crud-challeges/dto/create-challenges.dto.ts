@@ -57,7 +57,7 @@ export const CreateChallengeScheme = z.discriminatedUnion('challenge_type', [
 ).superRefine((_, ctx) => {const hasInvalidUnion = ctx.issues.some(i => i.code === "invalid_union");
   if (hasInvalidUnion) {ctx.addIssue({
       code: "custom",
-      error: "Invalid challenge type. Must be TECHNICAL or NON_TECHNICAL",
+      error: `Invalid challenge type. Allowed values are: ${Object.values(ChallengesType).join(', ')}`,
     });
   }
 });

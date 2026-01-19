@@ -157,14 +157,14 @@ export class ChallengesController {
         try {
             const { challengeId, nonTechnicalChallengeId, id_company } = req.params;
 
-            if (!z.uuid().safeParse(challengeId).success ||!z.uuid().safeParse(nonTechnicalChallengeId).success) {
+            if (!z.uuid().safeParse(challengeId).success || !z.uuid().safeParse(nonTechnicalChallengeId).success) {
                 return res.status(400).json({ message: "Invalid id provided" });
             }
 
-            const data = z.object({question: z.string().min(1),question_type: z.string().min(1),}).parse(req.body);
+            const data = z.object({ question: z.string().min(1), question_type: z.string().min(1), }).parse(req.body);
 
             const result =
-                await this.challengesServices.createNonTechnicalQuestion(nonTechnicalChallengeId,challengeId,id_company,data);
+                await this.challengesServices.createNonTechnicalQuestion(nonTechnicalChallengeId, challengeId, id_company, data);
 
             return res.status(201).json(result);
         } catch (error: any) {
@@ -226,7 +226,41 @@ export class ChallengesController {
             return this.handleError(res, error);
         }
     }
+    // =========================
+    // GET CHALLENGES BY COMPANY
+    // =========================
+    async getChallenges(req: Request, res: Response) {
+        try {
+            // get id company
+            const { id_company } = req.params;
 
+            // get params (?page=1&limit=10)
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
+
+            const result = await this.challengesServices.getChallengesByCompany(id_company, page, limit);
+
+            if (result.data.length === 0) {
+                return res.status(200).json({
+                    success: true,
+                    message: "No challenges found",
+                    ...result
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: "Challenges retrieved successfully",
+                ...result // Incluye data y meta
+            });
+
+        } catch (error: any) {
+            this.handleError(res, error);
+        }
+    }
+    // =========================
+    // handle error
+    // ========================
     private handleError(res: Response, error: any) {
         if (error instanceof ZodError) {
             return res.status(400).json({
