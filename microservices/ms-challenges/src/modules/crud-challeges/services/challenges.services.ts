@@ -197,4 +197,69 @@ export class ChallengesServices {
             return created;
         });
     }
+
+
+    async getChallengesByCompany(id_company?: string, page: number = 1, limit: number = 10) {
+        // calculate position register
+        const skip = (page - 1) * limit;
+        // valid exist the company
+        if (id_company) {
+            const validateCompany = await prisma.company.findUnique({ where: { id: id_company } });
+            if (!validateCompany) throw new Error("Company not found");
+        }
+
+        //get challenges paginate
+        const [challenges, totalCount] = await Promise.all([
+            prisma.challenges.findMany({
+                where: { created_by_company: id_company || null },
+                skip: skip,
+                take: limit,
+                include: {
+                    technical_challenge_metadata: true,
+                    non_technical_challenges: {
+                        include: {
+                            non_technical_questions: {
+                                include: { non_technical_question_options: true },
+                            },
+                        },
+                    },
+                    challenge_submissions: { select: { score: true } },
+                },
+                orderBy: { created_at: 'desc' },
+            }),
+            prisma.challenges.count({
+                where: { created_by_company: id_company || null }
+            })
+        ]);
+
+        if (challenges.length === 0) return { data: [], meta: { total: 0, page, last_page: 0 } };
+
+        // mapping metrics
+        const mappedChallenges = challenges.map((challenge) => {
+            const submissions = challenge.challenge_submissions || [];
+            const totalSub = submissions.length;
+            const averageScore = totalSub > 0
+                ? submissions.reduce((acc, curr) => acc + (curr.score || 0), 0) / totalSub
+                : 0;
+
+            return {
+                ...challenge,
+                metrics: {
+                    total_submissions: totalSub,
+                    average_score: totalSub > 0 ? Number(averageScore.toFixed(2)) : 0,
+                },
+            };
+        });
+
+        // return pagination
+        return {
+            data: mappedChallenges,
+            meta: {
+                total_records: totalCount,
+                current_page: page,
+                limit: limit,
+                total_pages: Math.ceil(totalCount / limit),
+            }
+        };
+    }
 }

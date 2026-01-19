@@ -5,7 +5,7 @@ export async function validateChallengeOwnership(tx: any,challengeId: string,id_
 
   if (!challenge) {throw new Error("Challenge not found");}
 
-  if (id_company &&challenge.created_by_company &&challenge.created_by_company !== id_company) {
+  if (id_company && challenge.created_by_company && challenge.created_by_company !== id_company) {
     throw new Error("Unauthorized: You do not have permission to edit this challenge");
   }
 
