@@ -288,6 +288,31 @@ export class ChallengesController {
             this.handleError(res, error);
         }
     }
+
+    async evaluateChallenges(req: Request, res: Response) {
+        try {
+            const { id_submission } = req.params;
+            // valid
+            if (!z.uuid().safeParse(id_submission).success) {
+                return res.status(400).json({ message: "A valid UUID for submission ID is required" });
+            }
+            // call services
+            const evaluation = await this.challengesServices.technicalEvaluation(id_submission);
+
+            return res.status(200).json({
+                message: "Automated evaluation completed successfully",
+                data: {
+                    submission_id: evaluation.id,
+                    score: evaluation.score,
+                    feedback: evaluation.ai_feedback,
+                    status: evaluation.status
+                }
+            });
+
+        } catch (error: any) {
+            this.handleError(res, error);
+        }
+    }
     // =========================
     // handle error
     // ========================

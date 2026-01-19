@@ -8,6 +8,9 @@ const challengeController = new ChallengesController();
 
 const auth = process.env.NODE_ENV === "production" ? authMiddleware : mockAuthCompany;
 
+
+router.post("/submissions/:id_submission/evaluate",auth,challengeController.evaluateChallenges.bind(challengeController));
+
 // CREATE
 router.post("/", challengeController.createChallenges.bind(challengeController));
 router.post("/:id_company",auth,challengeController.createChallenges.bind(challengeController));
