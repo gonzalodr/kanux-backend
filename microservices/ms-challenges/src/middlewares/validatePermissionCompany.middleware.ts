@@ -15,7 +15,7 @@ export const checkSubscriptionPermission = (actionType: CompanyActionType) => {
     try {
       const id_company = req.params.id_company || (req as any).user?.company_id;
       if (!id_company) {
-        return res.status(400).json({ message: "Company ID is required for subscription validation" });
+        next();
       }
 
       const SUBSCRIPTION_SERVICE_URL = process.env.SUBSCRIPTION_SERVICE_URL || 'http://localhost:3005';
