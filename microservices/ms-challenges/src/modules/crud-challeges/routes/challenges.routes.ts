@@ -2,15 +2,18 @@ import { Router } from "express";
 import { ChallengesController } from "../controller/challenges.controller";
 import { authMiddleware } from "../../../middlewares/auth.middleware";
 import { mockAuthCompany } from "../../../middlewares/mockAuth.middleware";
+import { checkSubscriptionPermission } from "../../../middlewares/validatePermissionCompany.middleware";
+import { mockCheckSubscription } from "../../../middlewares/mockPermissionCompani.middleware";
 const router = Router();
 const challengeController = new ChallengesController();
 
 
 const auth = process.env.NODE_ENV === "production" ? authMiddleware : mockAuthCompany;
+const permissionCompany = process.env.NODE_ENV === "production"?checkSubscriptionPermission:mockCheckSubscription;
 
 // CREATE
 router.post("/", challengeController.createChallenges.bind(challengeController));
-router.post("/:id_company",auth,challengeController.createChallenges.bind(challengeController));
+router.post("/:id_company",auth,permissionCompany,challengeController.createChallenges.bind(challengeController));
 
 // GET CHALLENGES
 ///?page=1&limit=5
