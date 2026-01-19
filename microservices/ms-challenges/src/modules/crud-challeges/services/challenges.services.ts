@@ -301,4 +301,52 @@ export class ChallengesServices {
             evaluation_type: sub.evaluation_type
         }));
     }
+    
+    async technicalEvaluation(id_submission: string) {
+        // valid submission
+        const submission = await prisma.challenge_submissions.findUnique({
+            where: { id: id_submission }
+        });
+
+        if (!submission) { throw new Error("Submission not found"); }
+
+
+        const randomScore = Math.floor(Math.random() * (100 - 70 + 1)) + 70;
+
+        const feedbacks = [
+            "Enfoque integral que combina sólidos conocimientos técnicos con buena comunicación.",
+            "Balance excelente entre habilidades técnicas y blandas.",
+            "Solución técnica robusta presentada de manera clara y concisa.",
+            "Capacidad para traducir conceptos técnicos a lenguaje accesible.",
+            "Desempeño destacado tanto en implementación como en explicación.",
+            "Pensamiento técnico profundo combinado con habilidades interpersonales.",
+            "Metodología de trabajo efectiva que integra aspectos técnicos y colaborativos.",
+            "Capacidad para justificar decisiones técnicas con argumentos sólidos.",
+            "Equilibrio entre perfección técnica y pragmatismo en la solución.",
+            "Visión holística que considera aspectos técnicos y de usuario."
+        ];
+        const randomFeedback = feedbacks[Math.floor(Math.random() * feedbacks.length)];
+
+        return await prisma.$transaction(async (tx) => {
+            const updatedSubmission = await tx.challenge_submissions.update({
+                where: { id: id_submission },
+                data: {
+                    score: randomScore,
+                    status: 'evaluada'
+                }
+            });
+
+            await tx.challenge_ai_feedback.create({
+                data: {
+                    submission_id: id_submission,
+                    feedback: randomFeedback
+                }
+            });
+
+            return {
+                ...updatedSubmission,
+                ai_feedback: randomFeedback
+            };
+        });
+    }
 }

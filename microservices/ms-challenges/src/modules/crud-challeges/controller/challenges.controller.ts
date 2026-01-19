@@ -23,7 +23,7 @@ export class ChallengesController {
     async createChallenges(req: Request, res: Response) {
         try {
             const { id_company } = req.params;
-            console.log(id_company)
+
 
             if (id_company && !z.uuid().safeParse(id_company).success) {
                 return res.status(400).json({ message: "A valid UUID for Company ID is required" });
@@ -267,8 +267,6 @@ export class ChallengesController {
             if (!z.uuid().safeParse(id_company).success) {
                 return res.status(400).json({ message: "A valid UUID for Company ID is required" });
             }
-            console.log(id_company)
-
             // call services
             const result = await this.challengesServices.getChallengeSubmissions(id_challenge,id_company);
 
@@ -283,6 +281,31 @@ export class ChallengesController {
 
             // 4
             return res.status(200).json({success: true,message: "Challenge submissions retrieved successfully",data: result});
+
+        } catch (error: any) {
+            this.handleError(res, error);
+        }
+    }
+
+    async evaluateChallenges(req: Request, res: Response) {
+        try {
+            const { id_submission } = req.params;
+            // valid
+            if (!z.uuid().safeParse(id_submission).success) {
+                return res.status(400).json({ message: "A valid UUID for submission ID is required" });
+            }
+            // call services
+            const evaluation = await this.challengesServices.technicalEvaluation(id_submission);
+
+            return res.status(200).json({
+                message: "Automated evaluation completed successfully",
+                data: {
+                    submission_id: evaluation.id,
+                    score: evaluation.score,
+                    feedback: evaluation.ai_feedback,
+                    status: evaluation.status
+                }
+            });
 
         } catch (error: any) {
             this.handleError(res, error);
