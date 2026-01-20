@@ -12,10 +12,3 @@ export const SubmitTechnicalChallengeSchema = z.object({
   source_code: z.string().min(10, "Source code is too short"),
 });
 
-export type StartTechnicalChallengeDto = z.infer<
-  typeof StartTechnicalChallengeSchema
->;
-
-export type SubmitTechnicalChallengeDto = z.infer<
-  typeof SubmitTechnicalChallengeSchema
->;
