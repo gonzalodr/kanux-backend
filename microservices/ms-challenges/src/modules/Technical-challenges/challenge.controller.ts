@@ -1,7 +1,10 @@
 import { Request, Response } from "express";
 import { ZodError } from "zod";
 import { ChallengeService } from "./challenge.service";
-import { StartTechnicalChallengeSchema,SubmitTechnicalChallengeSchema } from "./schema/submission.schema";
+import {
+  StartTechnicalChallengeSchema,
+  SubmitTechnicalChallengeSchema,
+} from "./schema/submission.schema";
 
 const challengeService = new ChallengeService();
 
@@ -110,6 +113,28 @@ export class ChallengeController {
       if (error.message === "SUBMISSION_NOT_ACTIVE") {
         return res.status(400).json({
           message: "La submission no está activa",
+        });
+      }
+
+      return res.status(500).json({
+        message: "Unexpected error",
+      });
+    }
+  }
+  async getMyChallengeHistory(req: Request, res: Response) {
+    try {
+      const userId = req.user!.id;
+
+      const history = await challengeService.getTalentChallengeHistory(userId);
+
+      return res.status(200).json({
+        message: "Historial de retos obtenido correctamente",
+        data: history,
+      });
+    } catch (error: any) {
+      if (error.message === "USER_NOT_TALENT") {
+        return res.status(403).json({
+          message: "El usuario no tiene un perfil de talento",
         });
       }
 

@@ -20,4 +20,10 @@ router.post(
   controller.submitTechnicalChallenge.bind(controller),
 );
 
+router.get(
+  "/challenge/submit-challenges",
+  auth,
+  controller.getMyChallengeHistory.bind(controller),
+);
+
 export default router;

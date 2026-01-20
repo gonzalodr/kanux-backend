@@ -123,4 +123,48 @@ export class ChallengeService {
       status: "submitted",
     };
   }
+  async getTalentChallengeHistory(userId: string) {
+    const user = await prisma.users.findUnique({
+      where: { id: userId },
+      include: {
+        talent_profiles: true,
+      },
+    });
+
+    if (!user || !user.talent_profiles) {
+      throw new Error("USER_NOT_TALENT");
+    }
+    const submissions = await prisma.challenge_submissions.findMany({
+      where: {
+        id_profile: user.talent_profiles.id,
+        status: "submitted",
+      },
+      include: {
+        challenges: {
+          select: {
+            id: true,
+            title: true,
+            challenge_type: true,
+            difficulty: true,
+          },
+        },
+      },
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+
+    return submissions.map((submission) => ({
+      submission_id: submission.id,
+      challenge: {
+        id: submission.challenges?.id,
+        title: submission.challenges?.title,
+        type: submission.challenges?.challenge_type,
+        difficulty: submission.challenges?.difficulty,
+      },
+      score: submission.score ?? 0,
+      status: submission.status ?? "N/E",
+      submitted_at: submission.created_at,
+    }));
+  }
 }
