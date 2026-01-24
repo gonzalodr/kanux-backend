@@ -1,9 +1,8 @@
 import express from "express";
 import cors from "cors";
-import challengesRouter from './modules/crud-challeges/routes/challenges.routes';
+import challengesRouter from "./modules/crud-challeges/routes/challenges.routes";
 import softChallengesRoutes from "./modules/soft-challenges/soft-challenges.routes";
 import technicalRoutes from "./modules/Technical-challenges/challenge.route";
-
 
 const app = express();
 
@@ -16,7 +15,7 @@ app.get("/health", (_req, res) => {
     status: "ok",
   });
 });
-app.use("/challenges",challengesRouter);
+app.use("/challenges", challengesRouter);
 
 app.use("/soft-challenges", softChallengesRoutes);
 app.use("/technical-challenges", technicalRoutes);

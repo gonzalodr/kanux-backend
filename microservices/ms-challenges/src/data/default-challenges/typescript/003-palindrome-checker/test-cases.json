@@ -1,0 +1,52 @@
+{
+  "test_cases": [
+    {
+      "id": 1,
+      "input": {
+        "str": "ana"
+      },
+      "expected_output": true,
+      "description": "Palíndromo simple"
+    },
+    {
+      "id": 2,
+      "input": {
+        "str": "hola"
+      },
+      "expected_output": false,
+      "description": "No es palíndromo"
+    },
+    {
+      "id": 3,
+      "input": {
+        "str": "A man a plan a canal Panama"
+      },
+      "expected_output": true,
+      "description": "Palíndromo con espacios y mayúsculas"
+    },
+    {
+      "id": 4,
+      "input": {
+        "str": "race car"
+      },
+      "expected_output": true,
+      "description": "Palíndromo con espacio"
+    },
+    {
+      "id": 5,
+      "input": {
+        "str": "No lemon, no melon"
+      },
+      "expected_output": true,
+      "description": "Palíndromo con puntuación"
+    },
+    {
+      "id": 6,
+      "input": {
+        "str": "hello"
+      },
+      "expected_output": false,
+      "description": "No es palíndromo simple"
+    }
+  ]
+}

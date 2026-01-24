@@ -1,0 +1,49 @@
+{
+  "test_cases": [
+    {
+      "id": 1,
+      "input": {
+        "a": 5,
+        "b": 3
+      },
+      "expected_output": 8,
+      "description": "Suma de números positivos"
+    },
+    {
+      "id": 2,
+      "input": {
+        "a": -2,
+        "b": 7
+      },
+      "expected_output": 5,
+      "description": "Suma con número negativo"
+    },
+    {
+      "id": 3,
+      "input": {
+        "a": 0,
+        "b": 0
+      },
+      "expected_output": 0,
+      "description": "Suma de ceros"
+    },
+    {
+      "id": 4,
+      "input": {
+        "a": -10,
+        "b": -5
+      },
+      "expected_output": -15,
+      "description": "Suma de números negativos"
+    },
+    {
+      "id": 5,
+      "input": {
+        "a": 100,
+        "b": 200
+      },
+      "expected_output": 300,
+      "description": "Suma de números grandes"
+    }
+  ]
+}

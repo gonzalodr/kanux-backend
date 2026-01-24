@@ -1,0 +1,18 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440004",
+  "title": "Secuencia de Fibonacci",
+  "description": "Escribe una función que retorne el n-ésimo número de la secuencia de Fibonacci. La secuencia comienza con 0, 1, y cada número siguiente es la suma de los dos anteriores.\n\n**Ejemplo:**\n```typescript\nfibonacci(0) // retorna 0\nfibonacci(1) // retorna 1\nfibonacci(5) // retorna 5\nfibonacci(10) // retorna 55\n```\n\n**Secuencia:** 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55...",
+  "challenge_type": "Técnico",
+  "difficulty": "Intermedio",
+  "duration_minutes": 25,
+  "programming_language": "typescript",
+  "constraints": [
+    "n será un número entero no negativo",
+    "n estará en el rango [0, 50]",
+    "Implementa una solución eficiente",
+    "Retorna un número"
+  ],
+  "initial_code": "function fibonacci(n: number): number {\n  // Tu código aquí\n  return 0;\n}",
+  "solution_template": "function fibonacci(n: number): number {\n  if (n <= 1) return n;\n  let a = 0, b = 1;\n  for (let i = 2; i <= n; i++) {\n    [a, b] = [b, a + b];\n  }\n  return b;\n}",
+  "tags": ["matemáticas", "recursión", "algoritmos", "secuencias"]
+}
