@@ -12,7 +12,7 @@
     "No modifiques el array original",
     "Retorna un nuevo array"
   ],
-  "initial_code": "function eliminarDuplicados(arr: number[]): number[] {\n  // Tu código aquí\n  return [];\n}",
-  "solution_template": "function eliminarDuplicados(arr: number[]): number[] {\n  return [...new Set(arr)];\n}",
+  "initial_code": "export function eliminarDuplicados(arr: number[]): number[] {\n  // Tu código aquí\n  return [];\n}",
+  "solution_template": "export function eliminarDuplicados(arr: number[]): number[] {\n  return [...new Set(arr)];\n}",
   "tags": ["arrays", "sets", "data structures"]
 }

@@ -12,7 +12,7 @@
     "Implementa una solución eficiente",
     "Retorna un número"
   ],
-  "initial_code": "function fibonacci(n: number): number {\n  // Tu código aquí\n  return 0;\n}",
-  "solution_template": "function fibonacci(n: number): number {\n  if (n <= 1) return n;\n  let a = 0, b = 1;\n  for (let i = 2; i <= n; i++) {\n    [a, b] = [b, a + b];\n  }\n  return b;\n}",
+  "initial_code": "export function fibonacci(n: number): number {\n  // Tu código aquí\n  return 0;\n}",
+  "solution_template": "export function fibonacci(n: number): number {\n  if (n <= 1) return n;\n  let a = 0, b = 1;\n  for (let i = 2; i <= n; i++) {\n    [a, b] = [b, a + b];\n  }\n  return b;\n}",
   "tags": ["matemáticas", "recursión", "algoritmos", "secuencias"]
 }

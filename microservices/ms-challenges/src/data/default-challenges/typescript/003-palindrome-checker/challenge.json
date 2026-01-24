@@ -12,7 +12,7 @@
     "Solo considera letras y números",
     "Retorna un boolean"
   ],
-  "initial_code": "function esPalindromo(str: string): boolean {\n  // Tu código aquí\n  return false;\n}",
-  "solution_template": "function esPalindromo(str: string): boolean {\n  const cleaned = str.toLowerCase().replace(/[^a-z0-9]/g, '');\n  return cleaned === cleaned.split('').reverse().join('');\n}",
+  "initial_code": "export function esPalindromo(str: string): boolean {\n  // Tu código aquí\n  return false;\n}",
+  "solution_template": "export function esPalindromo(str: string): boolean {\n  const cleaned = str.toLowerCase().replace(/[^a-z0-9]/g, '');\n  return cleaned === cleaned.split('').reverse().join('');\n}",
   "tags": ["strings", "algoritmos", "lógica"]
 }

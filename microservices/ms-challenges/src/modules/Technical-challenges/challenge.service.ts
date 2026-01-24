@@ -1,38 +1,13 @@
 import { prisma } from "../../lib/prisma";
 import fs from "fs";
 import path from "path";
+import { DEFAULT_CHALLENGE_FILES } from "../challenge-execution/execution.service";
 import {
   StartTechnicalChallengeDto,
   SubmitTechnicalChallengeDto,
 } from "./dto/start-schema-challenge.dto";
 
 export class ChallengeService {
-  private DEFAULT_CHALLENGE_FILES: Record<
-    string,
-    { language: "javascript" | "typescript"; folder: string }
-  > = {
-    "550e8400-e29b-41d4-a716-446655440001": {
-      language: "javascript",
-      folder: "001-sum-two-numbers",
-    },
-    "550e8400-e29b-41d4-a716-446655440002": {
-      language: "javascript",
-      folder: "002-reverse-string",
-    },
-    "550e8400-e29b-41d4-a716-446655440003": {
-      language: "typescript",
-      folder: "003-palindrome-checker",
-    },
-    "550e8400-e29b-41d4-a716-446655440004": {
-      language: "typescript",
-      folder: "004-fibonacci",
-    },
-    "550e8400-e29b-41d4-a716-446655440005": {
-      language: "typescript",
-      folder: "005-array-duplicates",
-    },
-  };
-
   async getPublicTechnicalChallenges(page: number = 1, limit: number = 10) {
     const skip = (page - 1) * limit;
     const [challenges, totalCount] = await Promise.all([
@@ -78,7 +53,7 @@ export class ChallengeService {
       throw new Error("Assets not available for this challenge");
     }
 
-    const fileInfo = this.DEFAULT_CHALLENGE_FILES[challengeId];
+    const fileInfo = DEFAULT_CHALLENGE_FILES[challengeId];
     if (!fileInfo) {
       throw new Error("Assets mapping not found for challenge");
     }

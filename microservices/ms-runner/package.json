@@ -1,0 +1,33 @@
+{
+  "name": "ms-runner",
+  "version": "1.0.0",
+  "description": "Ephemeral code execution microservice",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "nodemon",
+    "build": "rimraf dist && tsc",
+    "start": "node dist/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dockerode": "^4.0.3",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "tar-stream": "^3.1.7",
+    "typescript": "^5.9.3",
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "@types/dockerode": "^3.3.47",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.0.3",
+    "@types/tar-stream": "^2.2.3",
+    "nodemon": "^3.1.11",
+    "rimraf": "^6.1.2",
+    "ts-node": "^10.9.2"
+  }
+}
