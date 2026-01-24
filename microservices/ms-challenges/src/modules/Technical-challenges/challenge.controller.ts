@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { ZodError } from "zod";
+import { ZodError, z } from "zod";
 import { ChallengeService } from "./challenge.service";
 import {
   StartTechnicalChallengeSchema,
@@ -9,6 +9,54 @@ import {
 const challengeService = new ChallengeService();
 
 export class ChallengeController {
+  async getPublicTechnicalChallenges(req: Request, res: Response) {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const result = await challengeService.getPublicTechnicalChallenges(
+        page,
+        limit,
+      );
+      return res.status(200).json({
+        success: true,
+        message: result.data.length
+          ? "Challenges retrieved successfully"
+          : "No challenges found",
+        ...result,
+      });
+    } catch (error: any) {
+      return res
+        .status(500)
+        .json({ message: error.message ?? "Internal server error" });
+    }
+  }
+
+  async getPublicTechnicalChallengeDetail(req: Request, res: Response) {
+    try {
+      const { challengeId } = req.params;
+      if (!z.uuid().safeParse(challengeId).success) {
+        return res.status(400).json({ message: "Invalid challenge id" });
+      }
+      const result =
+        await challengeService.getPublicTechnicalChallengeDetail(challengeId);
+      return res.status(200).json({
+        success: true,
+        message: "Challenge retrieved successfully",
+        ...result,
+      });
+    } catch (error: any) {
+      const msg = error?.message;
+      if (msg === "Challenge not found")
+        return res.status(404).json({ message: msg });
+      if (msg === "Assets not available for this challenge")
+        return res.status(400).json({ message: msg });
+      if (msg === "Assets mapping not found for challenge")
+        return res.status(500).json({ message: msg });
+      return res
+        .status(500)
+        .json({ message: error.message ?? "Internal server error" });
+    }
+  }
   async startTechnicalChallenge(req: Request, res: Response) {
     try {
       const userId = req.user!.id;

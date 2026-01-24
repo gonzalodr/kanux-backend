@@ -8,6 +8,13 @@ const controller = new ChallengeController();
 
 const auth = process.env.NODE_ENV === "production" ? authMiddleware : mockAuth;
 
+// Public technical challenges (no auth)
+router.get("/public", controller.getPublicTechnicalChallenges.bind(controller));
+router.get(
+  "/public/:challengeId",
+  controller.getPublicTechnicalChallengeDetail.bind(controller),
+);
+
 router.post(
   "/:challengeId/start",
   auth,

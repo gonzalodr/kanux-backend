@@ -35,16 +35,6 @@ router.post(
 // GET CHALLENGES
 ///?page=1&limit=5
 router.get("/", challengeController.getChallenges.bind(challengeController));
-router.get(
-  "/public/technical",
-  challengeController.getPublicTechnicalChallenges.bind(challengeController),
-);
-router.get(
-  "/public/technical/:challengeId",
-  challengeController.getPublicTechnicalChallengeDetail.bind(
-    challengeController,
-  ),
-);
 // /uuid-empresa?page=2&limit=10
 router.get(
   "/:id_company",

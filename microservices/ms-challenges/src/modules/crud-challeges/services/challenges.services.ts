@@ -1,5 +1,3 @@
-import fs from "fs";
-import path from "path";
 import { CreateChallengeDto } from "../dto/create-challenges.dto";
 import {
   ChallengeBaseUpdateDto,
@@ -16,31 +14,7 @@ import {
   validateFromOption,
 } from "../helpers/challenges.helpers";
 
-const DEFAULT_CHALLENGE_FILES: Record<
-  string,
-  { language: "javascript" | "typescript"; folder: string }
-> = {
-  "550e8400-e29b-41d4-a716-446655440001": {
-    language: "javascript",
-    folder: "001-sum-two-numbers",
-  },
-  "550e8400-e29b-41d4-a716-446655440002": {
-    language: "javascript",
-    folder: "002-reverse-string",
-  },
-  "550e8400-e29b-41d4-a716-446655440003": {
-    language: "typescript",
-    folder: "003-palindrome-checker",
-  },
-  "550e8400-e29b-41d4-a716-446655440004": {
-    language: "typescript",
-    folder: "004-fibonacci",
-  },
-  "550e8400-e29b-41d4-a716-446655440005": {
-    language: "typescript",
-    folder: "005-array-duplicates",
-  },
-};
+// Removed DEFAULT_CHALLENGE_FILES; mapping now lives in Technical-challenges service
 
 export class ChallengesServices {
   async createChallenges(id_company: string, data: CreateChallengeDto) {
@@ -154,6 +128,7 @@ export class ChallengesServices {
       if (challenge.challenge_type !== ChallengesType.TECHNICAL_CHALLENGES) {
         throw new Error("This challenge is not technical");
       }
+
       const existing = await tx.technical_challenge_metadata.findFirst({
         where: { challenge_id: challengeId },
       });
@@ -171,6 +146,7 @@ export class ChallengesServices {
           },
         });
       }
+
       return { message: "Metadata updated successfully" };
     });
   }
@@ -351,106 +327,9 @@ export class ChallengesServices {
     };
   }
 
-  async getPublicTechnicalChallenges(page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
+  // Public technical endpoints moved to Technical-challenges module
 
-    const [challenges, totalCount] = await Promise.all([
-      prisma.challenges.findMany({
-        where: {
-          created_by_company: null,
-          challenge_type: ChallengesType.TECHNICAL_CHALLENGES,
-        },
-        skip,
-        take: limit,
-        include: {
-          technical_challenge_metadata: true,
-          challenge_submissions: { select: { score: true } },
-        },
-        orderBy: { created_at: "desc" },
-      }),
-      prisma.challenges.count({
-        where: {
-          created_by_company: null,
-          challenge_type: ChallengesType.TECHNICAL_CHALLENGES,
-        },
-      }),
-    ]);
-
-    const mappedChallenges = challenges.map((challenge) => {
-      const submissions = challenge.challenge_submissions || [];
-      const totalSub = submissions.length;
-      const averageScore =
-        totalSub > 0
-          ? submissions.reduce((acc, curr) => acc + (curr.score || 0), 0) /
-            totalSub
-          : 0;
-
-      return {
-        ...challenge,
-        metrics: {
-          total_submissions: totalSub,
-          average_score: totalSub > 0 ? Number(averageScore.toFixed(2)) : 0,
-        },
-      };
-    });
-
-    return {
-      data: mappedChallenges,
-      meta: {
-        total_records: totalCount,
-        current_page: page,
-        limit,
-        total_pages: Math.ceil(totalCount / limit),
-      },
-    };
-  }
-
-  async getPublicTechnicalChallengeDetail(challengeId: string) {
-    const challenge = await prisma.challenges.findUnique({
-      where: { id: challengeId },
-      include: {
-        technical_challenge_metadata: true,
-      },
-    });
-
-    if (!challenge || challenge.created_by_company !== null) {
-      throw new Error("Challenge not found");
-    }
-
-    if (challenge.challenge_type !== ChallengesType.TECHNICAL_CHALLENGES) {
-      throw new Error("This challenge is not technical");
-    }
-
-    const metadata = challenge.technical_challenge_metadata?.[0];
-    if (!metadata || metadata.source !== "KANUX_JSON") {
-      throw new Error("Assets not available for this challenge");
-    }
-
-    const fileInfo = DEFAULT_CHALLENGE_FILES[challengeId];
-    if (!fileInfo) {
-      throw new Error("Assets mapping not found for challenge");
-    }
-
-    const baseDir = path.resolve(
-      __dirname,
-      "../../../data/default-challenges",
-      fileInfo.language,
-      fileInfo.folder,
-    );
-
-    const [challengeJsonRaw, testCasesJsonRaw] = await Promise.all([
-      fs.promises.readFile(path.join(baseDir, "challenge.json"), "utf8"),
-      fs.promises.readFile(path.join(baseDir, "test-cases.json"), "utf8"),
-    ]);
-
-    return {
-      data: challenge,
-      assets: {
-        challenge: JSON.parse(challengeJsonRaw),
-        test_cases: JSON.parse(testCasesJsonRaw),
-      },
-    };
-  }
+  // Public technical endpoints moved to Technical-challenges module
   //b32dd184-e81f-4cc4-b72b-bbea0635af15
   async getChallengeSubmissions(id_challenge: string, id_company: string) {
     const validateCompany = await prisma.company.findUnique({
