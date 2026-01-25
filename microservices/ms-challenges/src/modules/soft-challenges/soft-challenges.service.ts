@@ -19,6 +19,14 @@ export class SoftChallengesService {
           difficulty: true,
           duration_minutes: true,
           created_at: true,
+          created_by_company: true,
+          company: {
+            select: {
+              name: true,
+              about: true,
+              url_logo: true,
+            },
+          },
         },
         orderBy: {
           created_at: "desc",
@@ -33,8 +41,12 @@ export class SoftChallengesService {
       }),
     ]);
 
+      ...challenge,
+      company: challenge.created_by_company ? challenge.company : null,
+    }));
+
     return {
-      data: challenges,
+      data: normalizedChallenges,
       meta: {
         total,
         page,
@@ -68,6 +80,13 @@ export class SoftChallengesService {
             },
           },
         },
+        company: {
+          select: {
+            name: true,
+            about: true,
+            url_logo: true,
+          },
+        },
       },
     });
 
@@ -75,7 +94,10 @@ export class SoftChallengesService {
       throw new Error("Soft challenge not found");
     }
 
-    return challenge;
+    return {
+      ...challenge,
+      company: challenge.created_by_company ? challenge.company : null,
+    };
   }
 
   // SUBMIT SOFT CHALLENGE

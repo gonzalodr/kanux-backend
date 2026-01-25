@@ -15,7 +15,23 @@ export class ChallengeService {
         where: { created_by_company: null, challenge_type: "Técnico" },
         skip,
         take: limit,
-        include: { technical_challenge_metadata: true },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          difficulty: true,
+          duration_minutes: true,
+          created_at: true,
+          created_by_company: true,
+          technical_challenge_metadata: true,
+          company: {
+            select: {
+              name: true,
+              about: true,
+              url_logo: true,
+            },
+          },
+        },
         orderBy: { created_at: "desc" },
       }),
       prisma.challenges.count({
@@ -23,8 +39,13 @@ export class ChallengeService {
       }),
     ]);
 
+    const normalizedChallenges = challenges.map((challenge) => ({
+      ...challenge,
+      company: challenge.created_by_company ? challenge.company : null,
+    }));
+
     return {
-      data: challenges,
+      data: normalizedChallenges,
       meta: {
         total_records: totalCount,
         current_page: page,
@@ -37,7 +58,16 @@ export class ChallengeService {
   async getPublicTechnicalChallengeDetail(challengeId: string) {
     const challenge = await prisma.challenges.findUnique({
       where: { id: challengeId },
-      include: { technical_challenge_metadata: true },
+      include: {
+        technical_challenge_metadata: true,
+        company: {
+          select: {
+            name: true,
+            about: true,
+            url_logo: true,
+          },
+        },
+      },
     });
 
     if (
@@ -70,8 +100,13 @@ export class ChallengeService {
       fs.promises.readFile(path.join(baseDir, "test-cases.json"), "utf8"),
     ]);
 
+    const challengeData = {
+      ...challenge,
+      company: challenge.created_by_company ? challenge.company : null,
+    };
+
     return {
-      data: challenge,
+      data: challengeData,
       assets: {
         challenge: JSON.parse(challengeJsonRaw),
         test_cases: JSON.parse(testCasesJsonRaw),
