@@ -70,4 +70,30 @@ export class SkillsService {
       where: { id: skillId },
     });
   }
+  async getSkillsForFilter() {
+  return prisma.skills.findMany({
+    select: {
+      id: true,
+      name: true,
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
+}
+
+async getSubSkillsByCategory(parentCategoryId: string) {
+  return prisma.skills.findMany({
+    where: {
+      category: {
+        parent_child: parentCategoryId,
+      },
+    },
+    include: {
+      category: true,
+    },
+  });
+}
+
+
 }

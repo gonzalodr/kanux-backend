@@ -63,4 +63,29 @@ export class SkillsController {
       res.status(400).json({ message: error.message });
     }
   }
+  async getSkillsWithSubSkills(req: Request, res: Response) {
+    try {
+      const skills = await skillsService.getSkillsForFilter();
+      res.json(serializeBigInt(skills));
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+  async getSubSkillsByCategory(req: Request, res: Response) {
+    try {
+      const { categoryId } = req.params;
+
+      if (!categoryId) {
+        return res.status(400).json({
+          message: "Category id is required",
+        });
+      }
+
+      const subSkills = await skillsService.getSubSkillsByCategory(categoryId);
+
+      res.json(serializeBigInt(subSkills));
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  }
 }
