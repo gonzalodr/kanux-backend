@@ -41,6 +41,7 @@ export class SoftChallengesService {
       }),
     ]);
 
+    const normalizedChallenges = challenges.map((challenge) => ({
       ...challenge,
       company: challenge.created_by_company ? challenge.company : null,
     }));
