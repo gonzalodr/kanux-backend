@@ -220,24 +220,52 @@ export class ChallengeService {
       },
     });
 
+    // Execute tests ONCE to get immediate score
+    let testResult: any = null;
+    let immediateScore = 30; // Default minimum score
+
+    try {
+      const executionService = new (
+        await import("../challenge-execution/execution.service")
+      ).ExecutionService();
+      testResult = await executionService.executeChallenge({
+        challengeId: submission.challenges!.id,
+        code: source_code,
+        language: programming_language as any,
+        userId: undefined,
+      });
+
+      // Calculate score based on test results
+      const passed = testResult?.summary?.passed ?? testResult?.passed ?? 0;
+      const total = testResult?.summary?.total ?? testResult?.total ?? 1;
+      immediateScore = Math.round((passed / total) * 100);
+    } catch (testErr) {
+      console.error("Test execution failed, using minimum score", testErr);
+    }
+
+    // Update to evaluated with test-based score immediately
     const updatedSubmission = await prisma.challenge_submissions.update({
       where: { id: submission_id },
       data: {
-        status: "submitted",
+        status: "evaluated",
+        score: immediateScore,
       },
     });
 
-    // Generate AI feedback automatically (non-blocking best-effort)
-    try {
-      const feedbackService = new FeedbackService();
-      await feedbackService.generateAndStore(updatedSubmission.id);
-    } catch (err) {
-      console.error("AI feedback generation failed", err);
-    }
+    // Process AI feedback in background (non-blocking)
+    // This will refine the score if AI is available
+    this.processAIFeedbackInBackground(
+      updatedSubmission.id,
+      testResult,
+      immediateScore,
+    ).catch((err) => {
+      console.error("Background AI feedback processing failed", err);
+    });
 
     return {
       submission_id: updatedSubmission.id,
-      status: "submitted",
+      status: "evaluated",
+      score: immediateScore,
     };
   }
   async getTalentChallengeHistory(userId: string) {
@@ -283,5 +311,43 @@ export class ChallengeService {
       status: submission.status ?? "N/E",
       submitted_at: submission.created_at,
     }));
+  }
+
+  /**
+   * Process AI feedback in background to refine the score.
+   * This runs asynchronously without blocking the user response.
+   * If AI provides a better evaluation, the score will be updated.
+   */
+  private async processAIFeedbackInBackground(
+    submissionId: string,
+    testResult: any,
+    fallbackScore: number,
+  ) {
+    try {
+      const feedbackService = new FeedbackService();
+      // Pass test results to avoid re-execution
+      const feedback = await feedbackService.generateAndStoreWithTestResults(
+        submissionId,
+        testResult,
+      );
+
+      // If AI provides a score, use it to refine the evaluation
+      if (feedback?.final_score != null) {
+        await prisma.challenge_submissions.update({
+          where: { id: submissionId },
+          data: {
+            score: feedback.final_score,
+          },
+        });
+        console.log(
+          `AI refined score for ${submissionId}: ${fallbackScore} → ${feedback.final_score}`,
+        );
+      }
+    } catch (err) {
+      console.error(
+        "Background AI processing failed, keeping test-based score",
+        err,
+      );
+    }
   }
 }

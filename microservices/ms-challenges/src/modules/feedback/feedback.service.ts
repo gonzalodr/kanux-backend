@@ -7,7 +7,14 @@ import { ExecutionService } from "../challenge-execution/execution.service";
 export class FeedbackService {
   private executionService = new ExecutionService();
 
-  async generateAndStore(submissionId: string) {
+  /**
+   * Generate and store AI feedback with pre-calculated test results.
+   * This avoids re-running tests if they were already executed.
+   */
+  async generateAndStoreWithTestResults(
+    submissionId: string,
+    testResult?: any,
+  ) {
     const submission = await prisma.challenge_submissions.findUnique({
       where: { id: submissionId },
       include: {
@@ -36,19 +43,23 @@ export class FeedbackService {
       submission.technical_challenge_submissions?.length
     ) {
       const tech = submission.technical_challenge_submissions[0];
-      let testResult: any = undefined;
-      try {
-        testResult = await this.executionService.executeChallenge({
-          challengeId: submission.challenges.id,
-          code: tech.source_code,
-          language: (tech.programming_language as any) || undefined,
-          userId: undefined,
-        });
-      } catch (err: any) {
-        testResult = {
-          status: "error",
-          summary: err?.message || "runner error",
-        };
+
+      // Use provided test results or execute tests if not provided
+      let finalTestResult = testResult;
+      if (!finalTestResult) {
+        try {
+          finalTestResult = await this.executionService.executeChallenge({
+            challengeId: submission.challenges.id,
+            code: tech.source_code,
+            language: (tech.programming_language as any) || undefined,
+            userId: undefined,
+          });
+        } catch (err: any) {
+          finalTestResult = {
+            status: "error",
+            summary: err?.message || "runner error",
+          };
+        }
       }
 
       const messages = buildTechnicalFeedbackPrompt({
@@ -65,16 +76,24 @@ export class FeedbackService {
           sourceCode: tech.source_code,
           createdAt: submission.created_at ?? undefined,
         },
-        testResult: testResult
+        testResult: finalTestResult
           ? {
-              status: testResult.status || "unknown",
-              summary: testResult.message || testResult.error || undefined,
+              status: finalTestResult.status || "unknown",
+              summary:
+                finalTestResult.message || finalTestResult.error || undefined,
               passed:
-                testResult.passed ?? testResult.summary?.passed ?? undefined,
+                finalTestResult.passed ??
+                finalTestResult.summary?.passed ??
+                undefined,
               failed:
-                testResult.failed ?? testResult.summary?.failed ?? undefined,
-              total: testResult.total ?? testResult.summary?.total ?? undefined,
-              details: testResult,
+                finalTestResult.failed ??
+                finalTestResult.summary?.failed ??
+                undefined,
+              total:
+                finalTestResult.total ??
+                finalTestResult.summary?.total ??
+                undefined,
+              details: finalTestResult,
             }
           : undefined,
       });
@@ -125,6 +144,14 @@ export class FeedbackService {
     });
 
     return payload;
+  }
+
+  /**
+   * Legacy method for backward compatibility.
+   * Calls the optimized method without pre-calculated test results.
+   */
+  async generateAndStore(submissionId: string) {
+    return this.generateAndStoreWithTestResults(submissionId, undefined);
   }
 
   async list(submissionId: string) {

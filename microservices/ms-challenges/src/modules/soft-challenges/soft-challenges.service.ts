@@ -316,6 +316,7 @@ export class SoftChallengesService {
   /**
    * Persists submission and answers in a single transaction.
    * Guarantees atomicity: all data is saved or nothing is saved.
+   * Marks as evaluated immediately with calculated score, then refines with AI in background.
    */
   private async saveSubmission(
     challengeId: string,
@@ -326,7 +327,7 @@ export class SoftChallengesService {
       data: {
         challenge_id: challengeId,
         id_profile: payload.id_profile,
-        status: "submitted",
+        status: "evaluated", // Immediately evaluated with calculated score
         score,
         evaluation_type: "Simulada",
         non_technical_answers: {
@@ -340,13 +341,10 @@ export class SoftChallengesService {
       },
     });
 
-    // Generate AI feedback automatically (non-blocking best-effort)
-    try {
-      const feedbackService = new FeedbackService();
-      await feedbackService.generateAndStore(submission.id);
-    } catch (err) {
-      console.error("AI feedback generation failed (soft challenge)", err);
-    }
+    // Process AI feedback in background to refine score (non-blocking)
+    this.processAIRefinementInBackground(submission.id, score).catch((err) => {
+      console.error("Background AI refinement failed", err);
+    });
 
     return submission;
   }
@@ -369,5 +367,37 @@ export class SoftChallengesService {
       correct_answers: correctCount,
       feedback,
     };
+  }
+
+  /**
+   * Process AI feedback in background to refine the score.
+   * This runs asynchronously without blocking the user response.
+   */
+  private async processAIRefinementInBackground(
+    submissionId: string,
+    fallbackScore: number,
+  ) {
+    try {
+      const feedbackService = new FeedbackService();
+      const feedback = await feedbackService.generateAndStore(submissionId);
+
+      // If AI provides a score, use it to refine the evaluation
+      if (feedback?.final_score != null) {
+        await prisma.challenge_submissions.update({
+          where: { id: submissionId },
+          data: {
+            score: feedback.final_score,
+          },
+        });
+        console.log(
+          `AI refined score for ${submissionId}: ${fallbackScore} → ${feedback.final_score}`,
+        );
+      }
+    } catch (err) {
+      console.error(
+        "Background AI refinement failed, keeping calculated score",
+        err,
+      );
+    }
   }
 }
