@@ -5,6 +5,7 @@ import softChallengesRoutes from "./modules/soft-challenges/soft-challenges.rout
 import technicalRoutes from "./modules/Technical-challenges/challenge.route";
 import internalExecutionRoutes from "./modules/challenge-execution/internal-runner.route";
 import feedbackRoutes from "./modules/feedback/feedback.route";
+import historyRoutes from "./modules/challenge-history/history.routes";
 
 const app = express();
 
@@ -12,15 +13,30 @@ app.use(cors());
 app.use(express.json());
 
 // Manejo de errores de parseo JSON (body-parser)
-app.use((err: any, _req: express.Request, res: express.Response, next: express.NextFunction) => {
-  if (err && err.type === "entity.parse.failed") {
-    return res.status(400).json({ success: false, message: "Invalid JSON body" });
-  }
-  if (err instanceof SyntaxError && (err as any).status === 400 && "body" in err) {
-    return res.status(400).json({ success: false, message: "Invalid JSON body" });
-  }
-  next(err);
-});
+app.use(
+  (
+    err: any,
+    _req: express.Request,
+    res: express.Response,
+    next: express.NextFunction,
+  ) => {
+    if (err && err.type === "entity.parse.failed") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid JSON body" });
+    }
+    if (
+      err instanceof SyntaxError &&
+      (err as any).status === 400 &&
+      "body" in err
+    ) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid JSON body" });
+    }
+    next(err);
+  },
+);
 
 app.get("/health", (_req, res) => {
   res.json({
@@ -34,5 +50,6 @@ app.use("/soft-challenges", softChallengesRoutes);
 app.use("/technical-challenges", technicalRoutes);
 app.use("/internal/technical-challenges", internalExecutionRoutes);
 app.use("/feedback", feedbackRoutes);
+app.use("/history", historyRoutes);
 
 export default app;
