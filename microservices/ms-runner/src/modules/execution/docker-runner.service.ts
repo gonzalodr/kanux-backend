@@ -36,7 +36,7 @@ export class DockerRunnerService {
         `MAX_LOG_BYTES=${RUNNER_MAX_LOG_BYTES}`,
       ],
       HostConfig: {
-        AutoRemove: true,
+        AutoRemove: false,
         NetworkMode: "none",
         Memory: RUNNER_MEMORY_BYTES,
         NanoCpus: RUNNER_NANO_CPUS,
@@ -44,7 +44,11 @@ export class DockerRunnerService {
       },
     });
 
-    const archive = this.buildArchive(request.code, request.tests);
+    const archive = this.buildArchive(
+      request.code,
+      request.tests,
+      request.entrypoint,
+    );
 
     await container.putArchive(archive, { path: "/runner" });
 
@@ -55,7 +59,17 @@ export class DockerRunnerService {
     try {
       await container.start();
       const status = await container.wait({ condition: "not-running" });
-      const logs = await this.readLogs(container);
+      // Read logs immediately after container stops, before auto-removal
+      let logs = "";
+      try {
+        logs = await this.readLogs(container);
+      } catch (logError) {
+        // Container may have already been auto-removed, use empty logs
+        logs = JSON.stringify({
+          status: "error",
+          error: "Failed to read container logs",
+        });
+      }
       const parsed = this.extractResult(logs);
       return {
         ...parsed,
@@ -68,9 +82,34 @@ export class DockerRunnerService {
     }
   }
 
-  private buildArchive(code: string, tests: ExecutionTestCase[]): Readable {
+  private buildArchive(
+    code: string,
+    tests: ExecutionTestCase[],
+    entrypoint: string,
+  ): Readable {
     const pack = tar.pack();
-    pack.entry({ name: "user-code.js" }, code);
+
+    const exportHelper = `
+// Auto-export the expected entrypoint so plain function declarations work
+try {
+  const __entry = typeof ${entrypoint} !== 'undefined' ? ${entrypoint} : undefined;
+  if (typeof __entry === 'function') {
+    if (typeof module !== 'undefined' && module.exports != null) {
+      module.exports['${entrypoint}'] = __entry;
+    }
+    if (typeof exports !== 'undefined') {
+      exports['${entrypoint}'] = __entry;
+    }
+    try { globalThis['${entrypoint}'] = __entry; } catch (_) {}
+  }
+} catch (_err) {
+  // ignore export helper errors
+}
+`;
+
+    const userCode = `${code}\n\n${exportHelper}`;
+
+    pack.entry({ name: "user-code.js" }, userCode);
     pack.entry({ name: "tests.json" }, JSON.stringify(tests));
     pack.entry({ name: "runner.js" }, RUNNER_WRAPPER);
     pack.finalize();
@@ -78,45 +117,62 @@ export class DockerRunnerService {
   }
 
   private async readLogs(container: Container): Promise<string> {
-    const raw = await container.logs({
-      stdout: true,
-      stderr: true,
-      follow: false,
-    });
-
-    if (Buffer.isBuffer(raw)) {
-      return raw.toString("utf8");
-    }
-
-    if (Array.isArray(raw)) {
-      return Buffer.concat(raw).toString("utf8");
-    }
-
-    const maybeStream: any = raw as any;
-    if (maybeStream && typeof maybeStream.on === "function") {
-      const stdout = new PassThrough();
-      const stderr = new PassThrough();
-      const stdoutChunks: Buffer[] = [];
-      const stderrChunks: Buffer[] = [];
-
-      stdout.on("data", (chunk: Buffer | string) => {
-        stdoutChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-      });
-      stderr.on("data", (chunk: Buffer | string) => {
-        stderrChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    try {
+      const raw = await container.logs({
+        stdout: true,
+        stderr: true,
+        follow: false,
       });
 
-      this.docker.modem.demuxStream(maybeStream, stdout, stderr);
+      if (Buffer.isBuffer(raw)) {
+        return raw.toString("utf8");
+      }
 
-      await Promise.all([
-        new Promise<void>((resolve) => stdout.on("end", resolve)),
-        new Promise<void>((resolve) => stderr.on("end", resolve)),
-      ]);
+      if (Array.isArray(raw)) {
+        return Buffer.concat(raw).toString("utf8");
+      }
 
-      return Buffer.concat([...stdoutChunks, ...stderrChunks]).toString("utf8");
+      const maybeStream: any = raw as any;
+      if (maybeStream && typeof maybeStream.on === "function") {
+        const stdout = new PassThrough();
+        const stderr = new PassThrough();
+        const stdoutChunks: Buffer[] = [];
+        const stderrChunks: Buffer[] = [];
+
+        stdout.on("data", (chunk: Buffer | string) => {
+          stdoutChunks.push(
+            Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk),
+          );
+        });
+        stderr.on("data", (chunk: Buffer | string) => {
+          stderrChunks.push(
+            Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk),
+          );
+        });
+
+        this.docker.modem.demuxStream(maybeStream, stdout, stderr);
+
+        await Promise.all([
+          new Promise<void>((resolve) => stdout.on("end", resolve)),
+          new Promise<void>((resolve) => stderr.on("end", resolve)),
+        ]);
+
+        return Buffer.concat([...stdoutChunks, ...stderrChunks]).toString(
+          "utf8",
+        );
+      }
+
+      return JSON.stringify(raw);
+    } catch (error: any) {
+      // Handle case where container was already removed (HTTP 409)
+      if (error?.statusCode === 409) {
+        return JSON.stringify({
+          status: "error",
+          error: "Container was already removed",
+        });
+      }
+      throw error;
     }
-
-    return JSON.stringify(raw);
   }
 
   private extractResult(logs: string): ExecutionResult {

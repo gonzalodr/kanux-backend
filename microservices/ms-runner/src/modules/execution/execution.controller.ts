@@ -55,10 +55,10 @@ export class ExecutionController {
         });
       }
 
-      return res.status(result.status === "ok" ? 200 : 500).json(result);
+      return res.status(200).json(result);
     } catch (error: any) {
       console.error("runner: unexpected error", error);
-      return res.status(500).json({
+      return res.status(200).json({
         status: "error",
         error: error?.message || "Unexpected runner error",
       });

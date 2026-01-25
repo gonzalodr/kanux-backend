@@ -22,9 +22,16 @@ router.post(
 );
 
 router.post(
-  "/:challengeId/submit",
+  "/:submissionId/submit",
   auth,
   controller.submitTechnicalChallenge.bind(controller),
+);
+
+// Get submission result with feedback
+router.get(
+  "/:submissionId/result",
+  auth,
+  controller.getSubmissionResult.bind(controller),
 );
 
 router.get(

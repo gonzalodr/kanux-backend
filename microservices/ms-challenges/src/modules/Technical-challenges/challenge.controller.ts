@@ -115,7 +115,7 @@ export class ChallengeController {
       const userId = req.user!.id;
 
       const payload = SubmitTechnicalChallengeSchema.parse({
-        submission_id: req.params.challengeId,
+        submission_id: req.params.submissionId,
         programming_language: req.body.programming_language,
         source_code: req.body.source_code,
       });
@@ -169,6 +169,49 @@ export class ChallengeController {
       });
     }
   }
+  async getSubmissionResult(req: Request, res: Response) {
+    try {
+      const userId = req.user!.id;
+      const { submissionId } = req.params;
+
+      if (!z.uuid().safeParse(submissionId).success) {
+        return res.status(400).json({ message: "Invalid submission id" });
+      }
+
+      const result = await challengeService.getSubmissionResult(
+        userId,
+        submissionId,
+      );
+
+      return res.status(200).json({
+        message: "Submission result retrieved successfully",
+        data: result,
+      });
+    } catch (error: any) {
+      if (error.message === "USER_NOT_TALENT") {
+        return res.status(403).json({
+          message: "El usuario no tiene un perfil de talento",
+        });
+      }
+
+      if (error.message === "SUBMISSION_NOT_FOUND") {
+        return res.status(404).json({
+          message: "La submission no existe",
+        });
+      }
+
+      if (error.message === "UNAUTHORIZED_SUBMISSION") {
+        return res.status(403).json({
+          message: "No tienes permisos para esta submission",
+        });
+      }
+
+      return res.status(500).json({
+        message: "Unexpected error",
+      });
+    }
+  }
+
   async getMyChallengeHistory(req: Request, res: Response) {
     try {
       const userId = req.user!.id;

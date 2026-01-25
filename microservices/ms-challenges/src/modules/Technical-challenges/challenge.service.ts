@@ -235,10 +235,16 @@ export class ChallengeService {
         userId: undefined,
       });
 
-      // Calculate score based on test results
-      const passed = testResult?.summary?.passed ?? testResult?.passed ?? 0;
-      const total = testResult?.summary?.total ?? testResult?.total ?? 1;
-      immediateScore = Math.round((passed / total) * 100);
+      // Check if execution had an error
+      if (testResult?.status === "error") {
+        console.error("Test execution error:", testResult?.error);
+        // Use minimum score on execution error
+      } else {
+        // Calculate score based on test results
+        const passed = testResult?.summary?.passed ?? testResult?.passed ?? 0;
+        const total = testResult?.summary?.total ?? testResult?.total ?? 1;
+        immediateScore = Math.round((passed / total) * 100);
+      }
     } catch (testErr) {
       console.error("Test execution failed, using minimum score", testErr);
     }
@@ -268,6 +274,7 @@ export class ChallengeService {
       score: immediateScore,
     };
   }
+
   async getTalentChallengeHistory(userId: string) {
     const user = await prisma.users.findUnique({
       where: { id: userId },
@@ -311,6 +318,68 @@ export class ChallengeService {
       status: submission.status ?? "N/E",
       submitted_at: submission.created_at,
     }));
+  }
+
+  async getSubmissionResult(userId: string, submissionId: string) {
+    const user = await prisma.users.findUnique({
+      where: { id: userId },
+      include: {
+        talent_profiles: true,
+      },
+    });
+
+    if (!user || !user.talent_profiles) {
+      throw new Error("USER_NOT_TALENT");
+    }
+
+    const submission = await prisma.challenge_submissions.findUnique({
+      where: { id: submissionId },
+      include: {
+        challenges: {
+          select: {
+            id: true,
+            title: true,
+            difficulty: true,
+            challenge_type: true,
+          },
+        },
+        challenge_ai_feedback: {
+          select: {
+            id: true,
+            feedback: true,
+            created_at: true,
+          },
+          orderBy: {
+            created_at: "desc",
+          },
+          take: 1,
+        },
+      },
+    });
+
+    if (!submission) {
+      throw new Error("SUBMISSION_NOT_FOUND");
+    }
+
+    if (submission.id_profile !== user.talent_profiles.id) {
+      throw new Error("UNAUTHORIZED_SUBMISSION");
+    }
+
+    const latestFeedback = submission.challenge_ai_feedback?.[0];
+
+    return {
+      submission_id: submission.id,
+      status: submission.status,
+      score: submission.score ?? 0,
+      challenge: {
+        id: submission.challenges?.id,
+        title: submission.challenges?.title,
+        difficulty: submission.challenges?.difficulty,
+      },
+      feedback: latestFeedback?.feedback || null,
+      submitted_at: submission.created_at,
+      feedback_generated_at: latestFeedback?.created_at || null,
+    };
   }
 
   /**
