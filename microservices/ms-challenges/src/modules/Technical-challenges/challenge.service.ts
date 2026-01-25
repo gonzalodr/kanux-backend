@@ -254,7 +254,7 @@ export class ChallengeService {
     const submissions = await prisma.challenge_submissions.findMany({
       where: {
         id_profile: user.talent_profiles.id,
-        status: "submitted",
+        status: "evaluated",
       },
       include: {
         challenges: {

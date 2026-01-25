@@ -134,6 +134,57 @@ export class SoftChallengesService {
     );
   }
 
+  // GET MY SOFT CHALLENGE HISTORY
+  async getMyChallengeHistory(profileId: string, page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+    const [submissions, total] = await prisma.$transaction([
+      prisma.challenge_submissions.findMany({
+        where: {
+          id_profile: profileId,
+          status: "evaluated",
+        },
+        include: {
+          challenges: {
+            select: {
+              id: true,
+              title: true,
+              description: true,
+              difficulty: true,
+              duration_minutes: true,
+            },
+          },
+        },
+        orderBy: {
+          created_at: "desc",
+        },
+        skip,
+        take: limit,
+      }),
+      prisma.challenge_submissions.count({
+        where: {
+          id_profile: profileId,
+          status: "evaluated",
+        },
+      }),
+    ]);
+
+    return {
+      data: submissions.map((submission) => ({
+        id: submission.id,
+        score: submission.score,
+        status: submission.status,
+        created_at: submission.created_at,
+        challenge: submission.challenges,
+      })),
+      meta: {
+        total,
+        page,
+        limit,
+        lastPage: Math.ceil(total / limit),
+      },
+    };
+  }
+
   // PRIVATE DOMAIN METHODS (BUSINESS LOGIC)
 
   /**
