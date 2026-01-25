@@ -222,7 +222,7 @@ export class ChallengeService {
 
     // Execute tests ONCE to get immediate score
     let testResult: any = null;
-    let immediateScore = 30; // Default minimum score
+    let immediateScore = 0; // Default score
 
     try {
       const executionService = new (
@@ -235,18 +235,21 @@ export class ChallengeService {
         userId: undefined,
       });
 
-      // Check if execution had an error
-      if (testResult?.status === "error") {
+      // Calculate score based on test results
+      if (testResult?.status === "ok" && testResult?.results) {
+        const results = testResult.results;
+        const totalTests = results.length;
+        const passedTests = results.filter((r: any) => r.pass === true).length;
+        immediateScore =
+          totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : 0;
+      } else if (testResult?.status === "error") {
         console.error("Test execution error:", testResult?.error);
-        // Use minimum score on execution error
-      } else {
-        // Calculate score based on test results
-        const passed = testResult?.summary?.passed ?? testResult?.passed ?? 0;
-        const total = testResult?.summary?.total ?? testResult?.total ?? 1;
-        immediateScore = Math.round((passed / total) * 100);
+        // Keep score at 0 on execution error
+        immediateScore = 0;
       }
     } catch (testErr) {
-      console.error("Test execution failed, using minimum score", testErr);
+      console.error("Test execution failed", testErr);
+      immediateScore = 0;
     }
 
     // Update to evaluated with test-based score immediately
@@ -390,18 +393,21 @@ export class ChallengeService {
   private async processAIFeedbackInBackground(
     submissionId: string,
     testResult: any,
-    fallbackScore: number,
+    initialScore: number,
   ) {
     try {
       const feedbackService = new FeedbackService();
-      // Pass test results to avoid re-execution
+      // Generate AI feedback (not score refinement)
       const feedback = await feedbackService.generateAndStoreWithTestResults(
         submissionId,
         testResult,
       );
 
-      // If AI provides a score, use it to refine the evaluation
-      if (feedback?.final_score != null) {
+      // Only update score if AI provides a HIGHER score than the initial test-based score
+      if (
+        feedback?.final_score != null &&
+        feedback.final_score > initialScore
+      ) {
         await prisma.challenge_submissions.update({
           where: { id: submissionId },
           data: {
@@ -409,12 +415,16 @@ export class ChallengeService {
           },
         });
         console.log(
-          `AI refined score for ${submissionId}: ${fallbackScore} → ${feedback.final_score}`,
+          `AI improved score for ${submissionId}: ${initialScore} → ${feedback.final_score}`,
+        );
+      } else if (feedback?.final_score != null) {
+        console.log(
+          `AI score ${feedback.final_score} not higher than test score ${initialScore}, keeping test score`,
         );
       }
     } catch (err) {
       console.error(
-        "Background AI processing failed, keeping test-based score",
+        "Background AI feedback processing failed, keeping test-based score",
         err,
       );
     }

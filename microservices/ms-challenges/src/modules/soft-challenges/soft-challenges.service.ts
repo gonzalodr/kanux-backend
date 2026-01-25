@@ -372,17 +372,21 @@ export class SoftChallengesService {
   /**
    * Process AI feedback in background to refine the score.
    * This runs asynchronously without blocking the user response.
+   * Only updates score if AI provides a HIGHER score than initial calculation.
    */
   private async processAIRefinementInBackground(
     submissionId: string,
-    fallbackScore: number,
+    initialScore: number,
   ) {
     try {
       const feedbackService = new FeedbackService();
       const feedback = await feedbackService.generateAndStore(submissionId);
 
-      // If AI provides a score, use it to refine the evaluation
-      if (feedback?.final_score != null) {
+      // Only update score if AI provides a HIGHER score than the initial calculated score
+      if (
+        feedback?.final_score != null &&
+        feedback.final_score > initialScore
+      ) {
         await prisma.challenge_submissions.update({
           where: { id: submissionId },
           data: {
@@ -390,12 +394,16 @@ export class SoftChallengesService {
           },
         });
         console.log(
-          `AI refined score for ${submissionId}: ${fallbackScore} → ${feedback.final_score}`,
+          `AI improved score for ${submissionId}: ${initialScore} → ${feedback.final_score}`,
+        );
+      } else if (feedback?.final_score != null) {
+        console.log(
+          `AI score ${feedback.final_score} not higher than calculated score ${initialScore}, keeping calculated score`,
         );
       }
     } catch (err) {
       console.error(
-        "Background AI refinement failed, keeping calculated score",
+        "Background AI feedback processing failed, keeping calculated score",
         err,
       );
     }
