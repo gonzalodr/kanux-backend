@@ -27,7 +27,7 @@ export const checkSubscriptionPermission = (actionType: CompanyActionType) => {
       const { allowed, success } = response.data;
 
       if (!success || !allowed) {
-        return res.status(403).json(response.data); // Devolvemos el error original del ms-subscription
+        return res.status(403).json(response.data);
       }
 
       next();
