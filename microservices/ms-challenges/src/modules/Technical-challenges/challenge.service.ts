@@ -6,6 +6,7 @@ import {
   StartTechnicalChallengeDto,
   SubmitTechnicalChallengeDto,
 } from "./dto/start-schema-challenge.dto";
+import { FeedbackService } from "../feedback/feedback.service";
 
 export class ChallengeService {
   async getPublicTechnicalChallenges(page: number = 1, limit: number = 10) {
@@ -225,6 +226,14 @@ export class ChallengeService {
         status: "submitted",
       },
     });
+
+    // Generate AI feedback automatically (non-blocking best-effort)
+    try {
+      const feedbackService = new FeedbackService();
+      await feedbackService.generateAndStore(updatedSubmission.id);
+    } catch (err) {
+      console.error("AI feedback generation failed", err);
+    }
 
     return {
       submission_id: updatedSubmission.id,

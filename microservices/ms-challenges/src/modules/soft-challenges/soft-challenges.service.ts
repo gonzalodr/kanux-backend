@@ -1,6 +1,7 @@
 import { prisma } from "../../lib/prisma";
 import { SubmitChallengeDto } from "./dto/submit-challenge.dto";
 import { isUUID } from "../../lib/isUUID";
+import { FeedbackService } from "../feedback/feedback.service";
 
 export class SoftChallengesService {
   // LIST SOFT CHALLENGES
@@ -270,7 +271,7 @@ export class SoftChallengesService {
     payload: SubmitChallengeDto,
     score: number,
   ) {
-    return prisma.challenge_submissions.create({
+    const submission = await prisma.challenge_submissions.create({
       data: {
         challenge_id: challengeId,
         id_profile: payload.id_profile,
@@ -287,6 +288,16 @@ export class SoftChallengesService {
         },
       },
     });
+
+    // Generate AI feedback automatically (non-blocking best-effort)
+    try {
+      const feedbackService = new FeedbackService();
+      await feedbackService.generateAndStore(submission.id);
+    } catch (err) {
+      console.error("AI feedback generation failed (soft challenge)", err);
+    }
+
+    return submission;
   }
 
   /**
