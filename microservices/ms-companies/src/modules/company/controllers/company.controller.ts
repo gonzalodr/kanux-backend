@@ -31,14 +31,13 @@ export class CompanyController {
 
             // validate with zod scheme 
             const validateCompany = CreateCompanySchema.parse(bodyData);
-            // //validate with zod scheme 
-            // const validateCompany = CreateCompanySchema.parse(req.body);
+            //validate with zod scheme 
 
             // send to services to register
             const result = await this.companyService.registerCompany(id_user,validateCompany,req.file?.buffer);
             
             // response
-            return res.status(200).json({ data: result.company, token: result.token });
+            return res.status(200).json(result);
 
         } catch (error:any) {
             if (error instanceof ZodError) {

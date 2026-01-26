@@ -40,13 +40,7 @@ export class CompanyService {
                     goal: data.goal,
                 },
                 include: {
-                    users: {
-                        select: {
-                            id: true,
-                            email: true,
-                            user_type: true,
-                        }
-                    }// include users data to create token
+                    users: true
                 }
             });
 
@@ -55,15 +49,16 @@ export class CompanyService {
             // validation if user is null
             if (!users) { throw new Error("The associated user was not found."); }
 
-            const payload: JwtPayload = {
-                userId: users.id,
-                email: users.email,
-                userType: users.user_type
+
+            return { 
+                success: true,
+                user:{
+                    id: users.id,
+                    email: users.email,
+                    user_type: users.user_type,
+                    profile: company
+                } 
             };
-
-            const token = JwtUtil.generateToken(payload);
-
-            return { company, token };
 
         } catch (error: any) {
             if (error.code === 'P2025') { throw new Error("The company record does not exist."); }
