@@ -14,6 +14,11 @@ export interface JwtPayload {
   userId: string;
   email: string;
   userType: string;
+  /**
+   * Additional fields to interoperate with other services that expect `id`/`role`.
+   */
+  id?: string;
+  role?: string;
   sessionId?: string;
 }
 

@@ -1,0 +1,18 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440005",
+  "title": "Eliminar Duplicados de un Array",
+  "description": "Escribe una función que reciba un array de números y retorne un nuevo array sin elementos duplicados, manteniendo el orden de la primera aparición.\n\n**Ejemplo:**\n```typescript\neliminarDuplicados([1, 2, 2, 3, 4, 4, 5]) // retorna [1, 2, 3, 4, 5]\neliminarDuplicados([5, 5, 5, 5]) // retorna [5]\neliminarDuplicados([1, 2, 3]) // retorna [1, 2, 3]\n```",
+  "challenge_type": "Técnico",
+  "difficulty": "Básico",
+  "duration_minutes": 15,
+  "programming_language": "typescript",
+  "constraints": [
+    "El array puede contener números positivos, negativos o cero",
+    "Mantén el orden de primera aparición",
+    "No modifiques el array original",
+    "Retorna un nuevo array"
+  ],
+  "initial_code": "export function eliminarDuplicados(arr: number[]): number[] {\n  // Tu código aquí\n  return [];\n}",
+  "solution_template": "export function eliminarDuplicados(arr: number[]): number[] {\n  return [...new Set(arr)];\n}",
+  "tags": ["arrays", "sets", "data structures"]
+}

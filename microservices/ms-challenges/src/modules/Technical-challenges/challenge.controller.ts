@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { ZodError } from "zod";
+import { ZodError, z } from "zod";
 import { ChallengeService } from "./challenge.service";
 import {
   StartTechnicalChallengeSchema,
@@ -9,6 +9,54 @@ import {
 const challengeService = new ChallengeService();
 
 export class ChallengeController {
+  async getPublicTechnicalChallenges(req: Request, res: Response) {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const result = await challengeService.getPublicTechnicalChallenges(
+        page,
+        limit,
+      );
+      return res.status(200).json({
+        success: true,
+        message: result.data.length
+          ? "Challenges retrieved successfully"
+          : "No challenges found",
+        ...result,
+      });
+    } catch (error: any) {
+      return res
+        .status(500)
+        .json({ message: error.message ?? "Internal server error" });
+    }
+  }
+
+  async getPublicTechnicalChallengeDetail(req: Request, res: Response) {
+    try {
+      const { challengeId } = req.params;
+      if (!z.uuid().safeParse(challengeId).success) {
+        return res.status(400).json({ message: "Invalid challenge id" });
+      }
+      const result =
+        await challengeService.getPublicTechnicalChallengeDetail(challengeId);
+      return res.status(200).json({
+        success: true,
+        message: "Challenge retrieved successfully",
+        ...result,
+      });
+    } catch (error: any) {
+      const msg = error?.message;
+      if (msg === "Challenge not found")
+        return res.status(404).json({ message: msg });
+      if (msg === "Assets not available for this challenge")
+        return res.status(400).json({ message: msg });
+      if (msg === "Assets mapping not found for challenge")
+        return res.status(500).json({ message: msg });
+      return res
+        .status(500)
+        .json({ message: error.message ?? "Internal server error" });
+    }
+  }
   async startTechnicalChallenge(req: Request, res: Response) {
     try {
       const userId = req.user!.id;
@@ -67,7 +115,7 @@ export class ChallengeController {
       const userId = req.user!.id;
 
       const payload = SubmitTechnicalChallengeSchema.parse({
-        submission_id: req.params.challengeId,
+        submission_id: req.params.submissionId,
         programming_language: req.body.programming_language,
         source_code: req.body.source_code,
       });
@@ -121,6 +169,49 @@ export class ChallengeController {
       });
     }
   }
+  async getSubmissionResult(req: Request, res: Response) {
+    try {
+      const userId = req.user!.id;
+      const { submissionId } = req.params;
+
+      if (!z.uuid().safeParse(submissionId).success) {
+        return res.status(400).json({ message: "Invalid submission id" });
+      }
+
+      const result = await challengeService.getSubmissionResult(
+        userId,
+        submissionId,
+      );
+
+      return res.status(200).json({
+        message: "Submission result retrieved successfully",
+        data: result,
+      });
+    } catch (error: any) {
+      if (error.message === "USER_NOT_TALENT") {
+        return res.status(403).json({
+          message: "El usuario no tiene un perfil de talento",
+        });
+      }
+
+      if (error.message === "SUBMISSION_NOT_FOUND") {
+        return res.status(404).json({
+          message: "La submission no existe",
+        });
+      }
+
+      if (error.message === "UNAUTHORIZED_SUBMISSION") {
+        return res.status(403).json({
+          message: "No tienes permisos para esta submission",
+        });
+      }
+
+      return res.status(500).json({
+        message: "Unexpected error",
+      });
+    }
+  }
+
   async getMyChallengeHistory(req: Request, res: Response) {
     try {
       const userId = req.user!.id;

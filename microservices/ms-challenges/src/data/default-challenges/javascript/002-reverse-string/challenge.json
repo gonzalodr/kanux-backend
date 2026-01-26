@@ -1,0 +1,17 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440002",
+  "title": "Invertir una Cadena",
+  "description": "Escribe una función que tome una cadena de texto y la retorne invertida.\n\n**Ejemplo:**\n```javascript\ninvertirCadena('hola') // retorna 'aloh'\ninvertirCadena('JavaScript') // retorna 'tpircSavaJ'\ninvertirCadena('12345') // retorna '54321'\n```",
+  "challenge_type": "Técnico",
+  "difficulty": "Básico",
+  "duration_minutes": 15,
+  "programming_language": "javascript",
+  "constraints": [
+    "La cadena puede contener letras, números y espacios",
+    "Debes retornar un string",
+    "Mantén los espacios en su nueva posición"
+  ],
+  "initial_code": "function invertirCadena(str) {\n  // Tu código aquí\n}",
+  "solution_template": "function invertirCadena(str) {\n  return str.split('').reverse().join('');\n}",
+  "tags": ["strings", "arrays", "básico"]
+}

@@ -1,6 +1,7 @@
 import { prisma } from "../../lib/prisma";
 import { SubmitChallengeDto } from "./dto/submit-challenge.dto";
 import { isUUID } from "../../lib/isUUID";
+import { FeedbackService } from "../feedback/feedback.service";
 
 export class SoftChallengesService {
   // LIST SOFT CHALLENGES
@@ -19,6 +20,14 @@ export class SoftChallengesService {
           difficulty: true,
           duration_minutes: true,
           created_at: true,
+          created_by_company: true,
+          company: {
+            select: {
+              name: true,
+              about: true,
+              url_logo: true,
+            },
+          },
         },
         orderBy: {
           created_at: "desc",
@@ -33,8 +42,13 @@ export class SoftChallengesService {
       }),
     ]);
 
+    const normalizedChallenges = challenges.map((challenge) => ({
+      ...challenge,
+      company: challenge.created_by_company ? challenge.company : null,
+    }));
+
     return {
-      data: challenges,
+      data: normalizedChallenges,
       meta: {
         total,
         page,
@@ -68,6 +82,13 @@ export class SoftChallengesService {
             },
           },
         },
+        company: {
+          select: {
+            name: true,
+            about: true,
+            url_logo: true,
+          },
+        },
       },
     });
 
@@ -75,7 +96,10 @@ export class SoftChallengesService {
       throw new Error("Soft challenge not found");
     }
 
-    return challenge;
+    return {
+      ...challenge,
+      company: challenge.created_by_company ? challenge.company : null,
+    };
   }
 
   // SUBMIT SOFT CHALLENGE
@@ -108,6 +132,57 @@ export class SoftChallengesService {
       totalQuestions,
       feedback,
     );
+  }
+
+  // GET MY SOFT CHALLENGE HISTORY
+  async getMyChallengeHistory(profileId: string, page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+    const [submissions, total] = await prisma.$transaction([
+      prisma.challenge_submissions.findMany({
+        where: {
+          id_profile: profileId,
+          status: "evaluated",
+        },
+        include: {
+          challenges: {
+            select: {
+              id: true,
+              title: true,
+              description: true,
+              difficulty: true,
+              duration_minutes: true,
+            },
+          },
+        },
+        orderBy: {
+          created_at: "desc",
+        },
+        skip,
+        take: limit,
+      }),
+      prisma.challenge_submissions.count({
+        where: {
+          id_profile: profileId,
+          status: "evaluated",
+        },
+      }),
+    ]);
+
+    return {
+      data: submissions.map((submission) => ({
+        id: submission.id,
+        score: submission.score,
+        status: submission.status,
+        created_at: submission.created_at,
+        challenge: submission.challenges,
+      })),
+      meta: {
+        total,
+        page,
+        limit,
+        lastPage: Math.ceil(total / limit),
+      },
+    };
   }
 
   // PRIVATE DOMAIN METHODS (BUSINESS LOGIC)
@@ -241,17 +316,18 @@ export class SoftChallengesService {
   /**
    * Persists submission and answers in a single transaction.
    * Guarantees atomicity: all data is saved or nothing is saved.
+   * Marks as evaluated immediately with calculated score, then refines with AI in background.
    */
   private async saveSubmission(
     challengeId: string,
     payload: SubmitChallengeDto,
     score: number,
   ) {
-    return prisma.challenge_submissions.create({
+    const submission = await prisma.challenge_submissions.create({
       data: {
         challenge_id: challengeId,
         id_profile: payload.id_profile,
-        status: "submitted",
+        status: "evaluated", // Immediately evaluated with calculated score
         score,
         evaluation_type: "Simulada",
         non_technical_answers: {
@@ -264,6 +340,13 @@ export class SoftChallengesService {
         },
       },
     });
+
+    // Process AI feedback in background to refine score (non-blocking)
+    this.processAIRefinementInBackground(submission.id, score).catch((err) => {
+      console.error("Background AI refinement failed", err);
+    });
+
+    return submission;
   }
 
   /**
@@ -284,5 +367,45 @@ export class SoftChallengesService {
       correct_answers: correctCount,
       feedback,
     };
+  }
+
+  /**
+   * Process AI feedback in background to refine the score.
+   * This runs asynchronously without blocking the user response.
+   * Only updates score if AI provides a HIGHER score than initial calculation.
+   */
+  private async processAIRefinementInBackground(
+    submissionId: string,
+    initialScore: number,
+  ) {
+    try {
+      const feedbackService = new FeedbackService();
+      const feedback = await feedbackService.generateAndStore(submissionId);
+
+      // Only update score if AI provides a HIGHER score than the initial calculated score
+      if (
+        feedback?.final_score != null &&
+        feedback.final_score > initialScore
+      ) {
+        await prisma.challenge_submissions.update({
+          where: { id: submissionId },
+          data: {
+            score: feedback.final_score,
+          },
+        });
+        console.log(
+          `AI improved score for ${submissionId}: ${initialScore} → ${feedback.final_score}`,
+        );
+      } else if (feedback?.final_score != null) {
+        console.log(
+          `AI score ${feedback.final_score} not higher than calculated score ${initialScore}, keeping calculated score`,
+        );
+      }
+    } catch (err) {
+      console.error(
+        "Background AI feedback processing failed, keeping calculated score",
+        err,
+      );
+    }
   }
 }

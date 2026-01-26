@@ -1,0 +1,52 @@
+{
+  "test_cases": [
+    {
+      "id": 1,
+      "input": {
+        "arr": [1, 2, 2, 3, 4, 4, 5]
+      },
+      "expected_output": [1, 2, 3, 4, 5],
+      "description": "Array con duplicados mezclados"
+    },
+    {
+      "id": 2,
+      "input": {
+        "arr": [5, 5, 5, 5]
+      },
+      "expected_output": [5],
+      "description": "Array con todos duplicados"
+    },
+    {
+      "id": 3,
+      "input": {
+        "arr": [1, 2, 3]
+      },
+      "expected_output": [1, 2, 3],
+      "description": "Array sin duplicados"
+    },
+    {
+      "id": 4,
+      "input": {
+        "arr": []
+      },
+      "expected_output": [],
+      "description": "Array vacío"
+    },
+    {
+      "id": 5,
+      "input": {
+        "arr": [-1, -1, 0, 0, 1, 1]
+      },
+      "expected_output": [-1, 0, 1],
+      "description": "Array con números negativos y duplicados"
+    },
+    {
+      "id": 6,
+      "input": {
+        "arr": [10, 20, 10, 30, 20, 40]
+      },
+      "expected_output": [10, 20, 30, 40],
+      "description": "Mantener orden de primera aparición"
+    }
+  ]
+}

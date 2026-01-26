@@ -52,4 +52,27 @@ export class SoftChallengesController {
       res.status(400).json({ message: error.message });
     }
   }
+
+  async getMyChallengeHistory(req: Request, res: Response) {
+    try {
+      const userId = req.user!.id;
+
+      const history = await softChallengesService.getMyChallengeHistory(userId);
+
+      return res.status(200).json({
+        message: "Historial de retos obtenido correctamente",
+        data: history,
+      });
+    } catch (error: any) {
+      if (error.message === "USER_NOT_TALENT") {
+        return res.status(403).json({
+          message: "El usuario no tiene un perfil de talento",
+        });
+      }
+
+      return res.status(500).json({
+        message: "Unexpected error",
+      });
+    }
+  }
 }
