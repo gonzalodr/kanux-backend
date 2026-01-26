@@ -1,7 +1,9 @@
-import app from "./app";
+
 import dotenv from "dotenv";
 
 dotenv.config();
+
+import app from "./app";
 
 const requiredEnv = ["PORT", "DATABASE_URL", "JWT_SECRET"];
 
