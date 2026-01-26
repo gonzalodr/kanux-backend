@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma";
 import { UpdateTalentProfileDto } from "./dto/update-talent-profile.dto";
+import { CreateTalentProfileDto } from "./dto/create-talent-profile.dto";
 import { calculateProfileCompleteness } from "./profile-completeness.utils";
 
 export class ProfilesService {
@@ -155,5 +156,47 @@ export class ProfilesService {
 
     // 4. Return final profile
     return finalProfile;
+  }
+
+  async preregisterProfile(userId: string, data: CreateTalentProfileDto) {
+    try {
+      const existingProfile = await prisma.talent_profiles.findUnique({ where: { user_id: userId }, });
+      if (existingProfile) { throw new Error("Profile already exists for this user."); }
+
+      const existingUser = await prisma.users.findUnique({ where: { id: userId } });
+      if (!existingUser) { throw new Error("The associated user was not found."); }
+
+      const newProfile = await prisma.talent_profiles.create({
+        data: {
+          user_id: userId,
+          first_name: data.first_name,
+          last_name: data.last_name,
+          title: data.title,
+          location: data.location,
+          experience_level: data.experience_level,
+          education: data.education,
+          about: data.about,
+          contact: data.contact,
+        },
+        include: {
+          users: true
+        }
+      });
+
+      const { users, ...profileData } = newProfile;
+
+      return {
+        success: true,
+        user: {
+          id: users?.id,
+          email: users?.email,
+          user_type: users?.user_type,
+          profile: profileData
+        }
+      };
+
+    } catch (error: any) {
+      throw new Error(error.message || "Error during profile pre-registration");
+    }
   }
 }

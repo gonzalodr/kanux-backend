@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { ProfilesService } from "./profiles.service";
 import { UpdateTalentProfileSchema } from "./dto/update-talent-profile.dto";
+import { CreateTalentProfileSchema } from "./dto/create-talent-profile.dto";
 import { serializeBigInt } from "../../lib/serialize";
 import { ZodError } from "zod";
 
@@ -50,6 +51,20 @@ export class ProfilesController {
       res.status(400).json({
         message: error.message || "Unexpected error",
       });
+    }
+  }
+
+  async preregisterTalentProfiles(req: Request, res: Response) {
+    try {
+      
+      const { id_user } = req.params;
+      const parseTalenT = CreateTalentProfileSchema.parse(req.body);
+
+      const result = await profilesService.preregisterProfile(id_user, parseTalenT);
+
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Unexpected error" });
     }
   }
 }
