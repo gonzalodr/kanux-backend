@@ -27,10 +27,15 @@ export class SessionManager {
     token: string;
   } {
     const sessionId = uuidv4();
-    const token = JwtUtil.generateToken({
+    // Normalize payload so downstream services that expect `id`/`role` keep working.
+    const normalizedPayload: JwtPayload = {
       ...payload,
+      id: payload.id ?? payload.userId,
+      role: payload.role ?? payload.userType,
       sessionId,
-    });
+    };
+
+    const token = JwtUtil.generateToken(normalizedPayload);
 
     const now = Date.now();
     const expiresIn = 7 * 24 * 60 * 60 * 1000;
@@ -38,10 +43,7 @@ export class SessionManager {
     const session: Session = {
       sessionId,
       token,
-      payload: {
-        ...payload,
-        sessionId,
-      },
+      payload: normalizedPayload,
       createdAt: now,
       expiresAt: now + expiresIn,
       deviceId,
@@ -50,10 +52,15 @@ export class SessionManager {
     this.sessions.set(sessionId, session);
 
     // Registrar sesión por usuario
-    if (!this.sessionsByUserId.has(payload.userId)) {
-      this.sessionsByUserId.set(payload.userId, []);
+    const ownerId = normalizedPayload.userId || normalizedPayload.id;
+    if (!ownerId) {
+      return { sessionId, token };
     }
-    this.sessionsByUserId.get(payload.userId)!.push(sessionId);
+
+    if (!this.sessionsByUserId.has(ownerId)) {
+      this.sessionsByUserId.set(ownerId, []);
+    }
+    this.sessionsByUserId.get(ownerId)!.push(sessionId);
 
     return {
       sessionId,
