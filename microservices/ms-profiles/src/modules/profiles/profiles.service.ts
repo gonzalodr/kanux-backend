@@ -161,14 +161,14 @@ export class ProfilesService {
   async preregisterProfile(userId: string, data: CreateTalentProfileDto) {
     try {
       const existingProfile = await prisma.talent_profiles.findUnique({ where: { user_id: userId }, });
-      if (existingProfile) { throw new Error("Profile already exists for this user."); }
+      if (!existingProfile) { throw new Error("Profile does not exist for this user."); }
 
       const existingUser = await prisma.users.findUnique({ where: { id: userId } });
       if (!existingUser) { throw new Error("The associated user was not found."); }
 
-      const newProfile = await prisma.talent_profiles.create({
+      const newProfile = await prisma.talent_profiles.update({
+        where: { user_id: userId },
         data: {
-          user_id: userId,
           first_name: data.first_name,
           last_name: data.last_name,
           title: data.title,
