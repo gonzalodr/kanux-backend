@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma";
 import { SubmitChallengeDto } from "./dto/submit-challenge.dto";
+import { StartSoftChallengeDto } from "./dto/start-soft-challenge.dto";
 import { isUUID } from "../../lib/isUUID";
 import { FeedbackService } from "../feedback/feedback.service";
 
@@ -102,6 +103,75 @@ export class SoftChallengesService {
     };
   }
 
+  async startSoftChallenge(userId: string, payload: StartSoftChallengeDto) {
+    const { challenge_id } = payload;
+
+    const user = await prisma.users.findUnique({
+      where: { id: userId },
+      include: {
+        talent_profiles: true,
+      },
+    });
+
+    if (!user || !user.talent_profiles) {
+      throw new Error("USER_NOT_TALENT");
+    }
+
+    const challenge = await prisma.challenges.findUnique({
+      where: { id: challenge_id },
+      select: {
+        id: true,
+        challenge_type: true,
+      },
+    });
+
+    if (!challenge) {
+      throw new Error("CHALLENGE_NOT_FOUND");
+    }
+
+    if (challenge.challenge_type !== "No Técnico") {
+      throw new Error("INVALID_CHALLENGE_TYPE");
+    }
+
+    const existingSubmission = await prisma.challenge_submissions.findFirst({
+      where: {
+        challenge_id,
+        id_profile: user.talent_profiles.id,
+        status: {
+          in: ["started", "submitted", "evaluated"],
+        },
+      },
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+
+    if (existingSubmission) {
+      if (existingSubmission.status === "started") {
+        return {
+          submission_id: existingSubmission.id,
+          status: existingSubmission.status,
+        };
+      }
+
+      throw new Error("CHALLENGE_ALREADY_SUBMITTED");
+    }
+
+    const submission = await prisma.challenge_submissions.create({
+      data: {
+        challenge_id,
+        id_profile: user.talent_profiles.id,
+        status: "started",
+        evaluation_type: "Simulada",
+      },
+    });
+
+    return {
+      submission_id: submission.id,
+      status: submission.status,
+    };
+  }
+
   // SUBMIT SOFT CHALLENGE
   async submit(challengeId: string, payload: SubmitChallengeDto) {
     if (!isUUID(challengeId)) {
@@ -112,7 +182,20 @@ export class SoftChallengesService {
 
     await this.validateChallenge(challengeId);
     await this.validateProfile(id_profile);
-    await this.preventDoubleSubmit(challengeId, id_profile);
+
+    const existingSubmission = await prisma.challenge_submissions.findFirst({
+      where: {
+        challenge_id: challengeId,
+        id_profile,
+      },
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+
+    if (existingSubmission && existingSubmission.status !== "started") {
+      throw new Error("Challenge already submitted by this profile");
+    }
 
     const correctMap = await this.loadCorrectAnswers(challengeId);
 
@@ -122,6 +205,22 @@ export class SoftChallengesService {
     );
 
     const feedback = this.generateFeedback(score);
+
+    if (existingSubmission?.status === "started") {
+      const submission = await this.finalizeStartedSubmission(
+        existingSubmission.id,
+        payload,
+        score,
+      );
+
+      return this.buildResponse(
+        submission.id,
+        score,
+        correctCount,
+        totalQuestions,
+        feedback,
+      );
+    }
 
     const submission = await this.saveSubmission(challengeId, payload, score);
 
@@ -225,22 +324,34 @@ export class SoftChallengesService {
     }
   }
 
-  /**
-   * Business rule: a profile can only submit a challenge once.
-   * Protects against double attempts and cheating.
-   */
-  private async preventDoubleSubmit(challengeId: string, profileId: string) {
-    const exists = await prisma.challenge_submissions.findFirst({
-      where: {
-        challenge_id: challengeId,
-        id_profile: profileId,
-      },
-      select: { id: true },
+  private async finalizeStartedSubmission(
+    submissionId: string,
+    payload: SubmitChallengeDto,
+    score: number,
+  ) {
+    const [updatedSubmission] = await prisma.$transaction([
+      prisma.challenge_submissions.update({
+        where: { id: submissionId },
+        data: {
+          status: "evaluated",
+          score,
+          evaluation_type: "Simulada",
+        },
+      }),
+      prisma.non_technical_answers.createMany({
+        data: payload.answers.map((a) => ({
+          submission_id: submissionId,
+          question_id: a.question_id,
+          selected_option_id: a.selected_option_id,
+        })),
+      }),
+    ]);
+
+    this.processAIRefinementInBackground(submissionId, score).catch((err) => {
+      console.error("Background AI refinement failed", err);
     });
 
-    if (exists) {
-      throw new Error("Challenge already submitted by this profile");
-    }
+    return updatedSubmission;
   }
 
   /**

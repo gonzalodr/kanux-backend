@@ -10,6 +10,7 @@ const auth = process.env.NODE_ENV === "production" ? authMiddleware : mockAuth;
 
 router.get("/", controller.listChallenges.bind(controller));
 router.get("/:id", auth, controller.getChallenge.bind(controller));
+router.post("/:id/start", auth, controller.startChallenge.bind(controller));
 router.post("/:id/submit", auth, controller.submitChallenge.bind(controller));
 router.get(
   "/completed/history",
