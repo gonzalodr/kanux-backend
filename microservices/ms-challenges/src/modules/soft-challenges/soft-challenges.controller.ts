@@ -3,6 +3,7 @@ import { SoftChallengesService } from "./soft-challenges.service";
 import { serializeBigInt } from "../../lib/serialize";
 import { SubmitChallengeSchema } from "./dto/submit-challenge.dto";
 import { ZodError } from "zod";
+import { StartSoftChallengeSchema } from "./dto/start-soft-challenge.dto";
 
 const softChallengesService = new SoftChallengesService();
 
@@ -27,6 +28,65 @@ export class SoftChallengesController {
       res.status(200).json(serializeBigInt(challenge));
     } catch (error: any) {
       res.status(404).json({ message: error.message });
+    }
+  }
+
+  async startChallenge(req: Request, res: Response) {
+    try {
+      const userId = req.user!.id;
+      const { id } = req.params;
+
+      const payload = StartSoftChallengeSchema.parse({
+        challenge_id: id,
+      });
+
+      const result = await softChallengesService.startSoftChallenge(
+        userId,
+        payload,
+      );
+
+      return res.status(200).json({
+        message: "Reto de habilidades blandas iniciado correctamente.",
+        data: result,
+      });
+    } catch (error: any) {
+      if (error instanceof ZodError) {
+        return res.status(422).json({
+          message: "Validation error",
+          errors: error.issues.map((e) => ({
+            field: e.path.join("."),
+            message: e.message,
+          })),
+        });
+      }
+
+      if (error.message === "USER_NOT_TALENT") {
+        return res.status(403).json({
+          message: "El usuario no tiene un perfil de talento",
+        });
+      }
+
+      if (error.message === "CHALLENGE_NOT_FOUND") {
+        return res.status(404).json({
+          message: "El reto no existe",
+        });
+      }
+
+      if (error.message === "INVALID_CHALLENGE_TYPE") {
+        return res.status(400).json({
+          message: "El reto no es de tipo no técnico",
+        });
+      }
+
+      if (error.message === "CHALLENGE_ALREADY_SUBMITTED") {
+        return res.status(409).json({
+          message: "El reto ya fue completado por este perfil",
+        });
+      }
+
+      return res.status(500).json({
+        message: "Unexpected error",
+      });
     }
   }
 
