@@ -15,7 +15,7 @@ export class CompanyService {
     async registerCompany(id_user: string, data: CreateCompanyDto, fileBuffer?: Buffer) {
         try {
             const existingCompany = await prisma.company.findUnique({ where: { id_user } });
-            if (existingCompany) throw new Error("A company for this user already exists.");
+            if (!existingCompany) throw new Error("A company does not exist.");
 
             const existUser = await prisma.users.findUnique({ where: { id: id_user } });
             if (!existUser) { throw new Error("The associated user was not found."); }
@@ -28,15 +28,15 @@ export class CompanyService {
             }
 
             //We update and bring the related user in a single step
-            const result = await prisma.company.create({
+            const result = await prisma.company.update({
+                where: { id_user: id_user },
                 data: {
                     name: data.name,
                     about: data.about,
                     location: data.location,
                     contact: data.contact,
                     url_logo: finalLogoUrl,
-                    goal: data.goal,
-                    id_user: id_user
+                    goal: data.goal
                 },
                 include: {
                     users: true
