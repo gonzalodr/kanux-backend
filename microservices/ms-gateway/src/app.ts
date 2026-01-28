@@ -34,12 +34,7 @@ proxyConfigs.forEach((proxyConfig) => {
           proxyRes: IncomingMessage,
           req: IncomingMessage,
           res: ServerResponse,
-        ) => {
-          console.log(`Proxy Response [${proxyConfig.context}]:`, {
-            statusCode: proxyRes.statusCode,
-            headers: proxyRes.headers,
-          });
-        },
+        ) => {},
         error: (
           err: Error,
           req: IncomingMessage,
