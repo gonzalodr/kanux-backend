@@ -32,9 +32,19 @@ export class ProfilesController {
     try {
       const userId = req.user!.id;
 
+      const file = req.file;
+      const bodyData = { ...req.body }
+      if (typeof bodyData.contact === 'string') {
+        try {
+          bodyData.contact = JSON.parse(bodyData.contact);
+        } catch (e) {
+          return res.status(400).json({ message: "Invalid format for contact field" });
+        }
+      }
+
       const payload = UpdateTalentProfileSchema.parse(req.body);
 
-      const updated = await profilesService.updateMyProfile(userId, payload);
+      const updated = await profilesService.updateMyProfile(userId, payload, file);
 
       res.json(updated);
     } catch (error: any) {
@@ -56,7 +66,7 @@ export class ProfilesController {
 
   async preregisterTalentProfiles(req: Request, res: Response) {
     try {
-      
+
       const { id_user } = req.params;
       const parseTalenT = CreateTalentProfileSchema.parse(req.body);
 
