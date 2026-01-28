@@ -4,6 +4,7 @@ import profilesRoutes from "./modules/profiles/profiles.routes";
 import skillsRoutes from "./modules/skills/skills.routes";
 import languagesRoutes from "./modules/languages/languages.routes";
 import catalogsRoutes from "./modules/catalogs/catalogs.routes";
+import dashboardRoutes from "./modules/dashboard/dashboard.route";
 
 const app = express();
 
@@ -21,5 +22,6 @@ app.use("/", profilesRoutes);
 app.use("/", catalogsRoutes);
 app.use("/skills", skillsRoutes);
 app.use("/languages", languagesRoutes);
+app.use("/dashboard", dashboardRoutes);
 
 export default app;
