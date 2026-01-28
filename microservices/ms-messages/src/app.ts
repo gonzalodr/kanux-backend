@@ -16,5 +16,5 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/conversations", conversationsRoutes);
-app.use("/messages", messagesRoutes);
+app.use("/", messagesRoutes);
 export default app;
