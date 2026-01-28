@@ -6,7 +6,6 @@ import { ZodError } from "zod";
 const feedService = new FeedService();
 
 export class FeedController {
-
   async createPost(req: Request, res: Response) {
     try {
       const userId = req.user!.userId;
@@ -16,9 +15,9 @@ export class FeedController {
       const post = await feedService.createPost(userId, payload);
 
       res.status(201).json({
-    message: "Se ha publicado correctamente en tu feed.",
-    data: post,
-    });
+        message: "Se ha publicado correctamente en tu feed.",
+        data: post,
+      });
     } catch (error: any) {
       if (error instanceof ZodError) {
         return res.status(422).json({
@@ -31,13 +30,13 @@ export class FeedController {
       }
 
       if (error.message === "USER_NOT_FOUND") {
-    return res.status(404).json({
-      message: "Usuario no encontrado",
-    });
-  }
+        return res.status(404).json({
+          message: "Usuario no encontrado",
+        });
+      }
 
       res.status(500).json({
-        message:  "Unexpected error",
+        message: "Unexpected error",
       });
     }
   }
@@ -55,7 +54,6 @@ export class FeedController {
         message: "Publicacion actualizada correctamente.",
         data: updatedPost,
       });
-
     } catch (error: any) {
       if (error instanceof ZodError) {
         return res.status(422).json({
@@ -72,15 +70,16 @@ export class FeedController {
       }
 
       if (error.message === "UNAUTHORIZED_ACTION") {
-        return res.status(403).json({ message: "No autorizado para actualizar esta publicacion" });
+        return res
+          .status(403)
+          .json({ message: "No autorizado para actualizar esta publicacion" });
       }
 
       res.status(500).json({ message: "Unexpected error" });
     }
   }
 
-
- async deletePost(req: Request, res: Response) {
+  async deletePost(req: Request, res: Response) {
     try {
       const userId = req.user!.userId;
       const { postId } = req.params;
@@ -91,9 +90,7 @@ export class FeedController {
         message: "Publicación eliminada correctamente.",
         data: deletedPost,
       });
-
     } catch (error: any) {
-
       if (error.message === "POST_NOT_FOUND") {
         return res.status(404).json({
           message: "La publicación no existe",
@@ -112,10 +109,9 @@ export class FeedController {
     }
   }
 
-
   async getAllPosts(req: Request, res: Response) {
     try {
-      const userId = req.user?.userId; // opcional
+      const userId = req.user?.userId;
       const posts = await feedService.getAllPosts(userId);
 
       res.status(200).json({
@@ -128,7 +124,6 @@ export class FeedController {
     }
   }
 
- 
   async getMyPosts(req: Request, res: Response) {
     try {
       const userId = req.user!.userId;
@@ -139,7 +134,6 @@ export class FeedController {
         data: posts,
       });
     } catch (error: any) {
-
       if (error.message === "USER_NOT_FOUND") {
         return res.status(404).json({
           message: "Usuario no encontrado",
@@ -151,5 +145,4 @@ export class FeedController {
       });
     }
   }
-  
 }
