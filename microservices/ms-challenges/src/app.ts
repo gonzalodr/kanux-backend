@@ -44,7 +44,7 @@ app.get("/health", (_req, res) => {
     status: "ok",
   });
 });
-app.use("/challenges", challengesRouter);
+app.use("/", challengesRouter);
 
 app.use("/soft-challenges", softChallengesRoutes);
 app.use("/technical-challenges", technicalRoutes);
