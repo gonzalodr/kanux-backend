@@ -4,6 +4,7 @@ import { authMiddleware } from "../../../middlewares/auth.middleware";
 import { mockAuthCompany } from "../../../middlewares/mockAuth.middleware";
 import { checkSubscriptionPermission } from "../../../middlewares/validatePermissionCompany.middleware";
 import { mockCheckSubscription } from "../../../middlewares/mockPermissionCompani.middleware";
+
 const router = Router();
 const challengeController = new ChallengesController();
 
@@ -14,6 +15,7 @@ const permissionCompany =
     ? checkSubscriptionPermission
     : mockCheckSubscription;
 
+// EVALUATE
 router.post(
   "/submissions/:id_submission/evaluate",
   auth,
@@ -22,34 +24,34 @@ router.post(
 
 // CREATE
 router.post(
-  "/",
-  challengeController.createChallenges.bind(challengeController),
-);
-router.post(
-  "/:id_company",
+  "/company/:id_company",
   auth,
   permissionCompany,
   challengeController.createChallenges.bind(challengeController),
 );
-
-// GET CHALLENGES
-///?page=1&limit=5
-router.get("/", challengeController.getChallenges.bind(challengeController));
-// /uuid-empresa?page=2&limit=10
-router.get(
-  "/:id_company",
-  auth,
-  challengeController.getChallenges.bind(challengeController),
+router.post(
+  "/",
+  challengeController.createChallenges.bind(challengeController),
 );
 
-// get challenge whith sumision
+// GET CHALLENGES
 router.get(
-  "/:id_challenge/submissions/:id_company",
+  "/company/:id_company",
+  mockAuthCompany,
+  challengeController.getChallengesByCompany.bind(challengeController), // Necesitarás crear este método
+);
+
+// GET all challenges (general)
+router.get("/", challengeController.getChallenges.bind(challengeController));
+
+// GET challenge submissions by company
+router.get(
+  "/:id_challenge/submissions/company/:id_company",
   auth,
   challengeController.getSubmissionsByChallenge.bind(challengeController),
 );
 
-//update challenge
+// UPDATE challenge base
 router.patch(
   "/:challengeId",
   challengeController.updateChallengeBase.bind(challengeController),
@@ -60,7 +62,7 @@ router.patch(
   challengeController.updateChallengeBase.bind(challengeController),
 );
 
-//update metada
+// UPDATE technical metadata
 router.patch(
   "/:challengeId/technical-metadata",
   challengeController.updateTechnicalMetadata.bind(challengeController),
@@ -71,7 +73,7 @@ router.patch(
   challengeController.updateTechnicalMetadata.bind(challengeController),
 );
 
-//update detaills
+// UPDATE non-technical details
 router.patch(
   "/:challengeId/non-technical/details",
   challengeController.updateNonTechnicalDetails.bind(challengeController),
@@ -82,7 +84,7 @@ router.patch(
   challengeController.updateNonTechnicalDetails.bind(challengeController),
 );
 
-// update question
+// UPDATE question
 router.patch(
   "/questions/:questionId",
   challengeController.updateNonTechnicalQuestion.bind(challengeController),
@@ -93,7 +95,7 @@ router.patch(
   challengeController.updateNonTechnicalQuestion.bind(challengeController),
 );
 
-// create question
+// CREATE question
 router.post(
   "/:challengeId/non-technical/:nonTechnicalChallengeId/questions",
   challengeController.createNonTechnicalQuestion.bind(challengeController),
@@ -104,7 +106,7 @@ router.post(
   challengeController.createNonTechnicalQuestion.bind(challengeController),
 );
 
-// update option
+// UPDATE option
 router.patch(
   "/options/:optionId",
   challengeController.updateNonTechnicalOption.bind(challengeController),
@@ -115,7 +117,7 @@ router.patch(
   challengeController.updateNonTechnicalOption.bind(challengeController),
 );
 
-// create option
+// CREATE option
 router.post(
   "/questions/:questionId/options",
   challengeController.createNonTechnicalOption.bind(challengeController),

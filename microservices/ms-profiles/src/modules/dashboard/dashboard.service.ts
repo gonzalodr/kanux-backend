@@ -113,10 +113,14 @@ export class DashboardService {
       const profile = post.talent_profiles;
 
       if (profile?.users) {
-        if (profile.users.company) {
+        if (
+          profile.users.company &&
+          Array.isArray(profile.users.company) &&
+          profile.users.company.length > 0
+        ) {
           author = {
             id: profile.id,
-            first_name: profile.users.company.name ?? null,
+            first_name: profile.users.company[0].name ?? null,
             last_name: null,
             title: null,
           };
