@@ -34,7 +34,19 @@ Module.prototype.require = function patchedRequire(name) {
 };
 
 const userModule = require('./user-code.js');
-const entryCandidate = userModule?.[ENTRYPOINT] || (typeof userModule === 'function' ? userModule : global[ENTRYPOINT]);
+
+// Try multiple ways to find the entrypoint function
+let entryCandidate = undefined;
+if (userModule?.[ENTRYPOINT]) {
+  entryCandidate = userModule[ENTRYPOINT];
+} else if (typeof userModule === 'function') {
+  entryCandidate = userModule;
+} else if (typeof global[ENTRYPOINT] === 'function') {
+  entryCandidate = global[ENTRYPOINT];
+} else if (typeof globalThis !== 'undefined' && typeof globalThis[ENTRYPOINT] === 'function') {
+  entryCandidate = globalThis[ENTRYPOINT];
+}
+
 if (typeof entryCandidate !== 'function') {
   throw new Error('Entrypoint not found: ' + ENTRYPOINT);
 }

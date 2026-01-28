@@ -12,7 +12,11 @@ router.post("/", auth, controller.sendMessage.bind(controller));
 router.get(
   "/conversations/:id",
   auth,
-  controller.getConversationMessages.bind(controller)
+  controller.getConversationMessages.bind(controller),
 );
-
+router.put(
+  "/conversations/:conversationId/read",
+  auth,
+  controller.markAsRead.bind(controller),
+);
 export default router;

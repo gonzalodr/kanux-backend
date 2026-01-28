@@ -65,8 +65,10 @@ export class ExecutionService {
         perTestTimeoutMs: this.perTestTimeoutMs,
       },
       {
-        headers: this.token ? { "x-runner-token": this.token } : undefined,
-        timeout: this.timeoutMs,
+        headers: process.env.RUNNER_AUTH_TOKEN
+          ? { "x-runner-token": process.env.RUNNER_AUTH_TOKEN }
+          : {},
+        timeout: Number(process.env.RUNNER_TIMEOUT_MS),
       },
     );
 

@@ -241,6 +241,37 @@ export class ChallengesController {
   // =========================
   // GET CHALLENGES BY COMPANY
   // =========================
+
+  async getChallengesByCompany(req: Request, res: Response) {
+    try {
+      const { id_company } = req.params;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+
+      const result = await this.challengesServices.getChallengesByCompany(
+        id_company,
+        page,
+        limit,
+      );
+
+      if (result.data.length === 0) {
+        return res.status(200).json({
+          success: true,
+          message: "No challenges found",
+          ...result,
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Challenges retrieved successfully",
+        ...result,
+      });
+    } catch (error: any) {
+      this.handleError(res, error);
+    }
+  }
+
   async getChallenges(req: Request, res: Response) {
     try {
       // get id company

@@ -13,3 +13,15 @@ declare global {
     }
   }
 }
+
+declare module "socket.io" {
+  interface Socket {
+    data: {
+      user?: {
+        id: string;
+        email: string;
+        role: string;
+      };
+    };
+  }
+}
