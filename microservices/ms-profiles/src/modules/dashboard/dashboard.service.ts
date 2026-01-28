@@ -52,52 +52,43 @@ export class DashboardService {
   }
 
   async getAllPosts(userId?: string): Promise<FeedPostResponse[]> {
-    const posts = await prisma.posts.findMany({
-      take: 5,
-      orderBy: { created_at: "desc" },
-      where: userId
-        ? {
-            NOT: { id_profile: userId },
-          }
-        : {},
+   const posts = await prisma.posts.findMany({
+  take: 5,
+  orderBy: { created_at: "desc" },
+  where: userId
+    ? {
+        NOT: { id_profile: userId },
+      }
+    : {},
+  include: {
+    post_comments: {
       include: {
-        post_comments: {
-          include: {
-            talent_profiles: {
-              include: {
-                users: {
-                  include: {
-                    company: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-        post_reactions: {
-          include: {
-            talent_profiles: {
-              include: {
-                users: {
-                  include: {
-                    company: true,
-                  },
-                },
-              },
-            },
-          },
-        },
         talent_profiles: {
           include: {
-            users: {
-              include: {
-                company: true,
-              },
-            },
+            company: true,
+            talent_profiles: true,
           },
         },
       },
-    });
+    },
+    post_reactions: {
+      include: {
+        talent_profiles: {
+          include: {
+            company: true,
+            talent_profiles: true,
+          },
+        },
+      },
+    },
+    talent_profiles: {
+      include: {
+        company: true,
+        talent_profiles: true,
+      },
+    },
+  },
+});
 
     return posts.map((post: (typeof posts)[number]) => {
       const isOwner = userId ? post.id_profile === userId : false;
@@ -112,24 +103,24 @@ export class DashboardService {
       let author: FeedPostResponse["author"] = null;
       const profile = post.talent_profiles;
 
-      if (profile?.users) {
+      if (profile?.talent_profiles?.user_id) {
         if (
-          profile.users.company &&
-          Array.isArray(profile.users.company) &&
-          profile.users.company.length > 0
+          profile.company &&
+          Array.isArray(profile.company) &&
+          profile.company.length > 0
         ) {
           author = {
             id: profile.id,
-            first_name: profile.users.company[0].name ?? null,
+            first_name: profile.company[0].name ?? null,
             last_name: null,
             title: null,
           };
         } else {
           author = {
             id: profile.id,
-            first_name: profile.first_name ?? null,
-            last_name: profile.last_name ?? null,
-            title: profile.title ?? null,
+            first_name: profile.talent_profiles?.first_name ?? null,
+            last_name: profile.talent_profiles?.last_name ?? null,
+            title: profile.talent_profiles?.title ?? null,
           };
         }
       }
