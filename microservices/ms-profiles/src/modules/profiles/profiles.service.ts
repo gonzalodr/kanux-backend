@@ -2,6 +2,7 @@ import { prisma } from "../../lib/prisma";
 import { UpdateTalentProfileDto } from "./dto/update-talent-profile.dto";
 import { CreateTalentProfileDto } from "./dto/create-talent-profile.dto";
 import { calculateProfileCompleteness } from "./profile-completeness.utils";
+import { uploadToCloudinary } from "../../utility/claudinary.utility";
 
 export class ProfilesService {
   async getMyProfile(userId: string) {
@@ -96,7 +97,7 @@ export class ProfilesService {
     return profile;
   }
 
-  async updateMyProfile(userId: string, payload: UpdateTalentProfileDto) {
+  async updateMyProfile(userId: string, payload: UpdateTalentProfileDto, file?: Express.Multer.File) {
     const profile = await prisma.talent_profiles.findUnique({
       where: { user_id: userId },
     });
@@ -105,6 +106,17 @@ export class ProfilesService {
       throw new Error("Profile not found");
     }
 
+    let imageProfileUrl = profile.image_url;
+
+    if (file) {
+      try {
+        const result = await uploadToCloudinary(file.buffer, `user_${userId}`);
+        imageProfileUrl = result.secure_url;
+      } catch (error) {
+        throw new Error("Failed to upload profile image");
+      }
+    }
+    
     const {
       first_name,
       last_name,
@@ -130,6 +142,7 @@ export class ProfilesService {
         education,
         about,
         contact,
+        image_url:imageProfileUrl,
         ...(learning_background_id && {
           learning_backgrounds: {
             connect: { id: learning_background_id },
