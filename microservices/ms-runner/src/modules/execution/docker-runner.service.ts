@@ -91,20 +91,51 @@ export class DockerRunnerService {
 
     const exportHelper = `
 // Auto-export the expected entrypoint so plain function declarations work
-try {
-  const __entry = typeof ${entrypoint} !== 'undefined' ? ${entrypoint} : undefined;
-  if (typeof __entry === 'function') {
-    if (typeof module !== 'undefined' && module.exports != null) {
-      module.exports['${entrypoint}'] = __entry;
+(function() {
+  try {
+    const entrypointName = '${entrypoint}';
+    let __entry = undefined;
+    
+    // Try to get the function using eval to access the local scope
+    try {
+      __entry = eval(entrypointName);
+    } catch (_) {}
+    
+    // Fallback: check module.exports
+    if (!__entry && module.exports && typeof module.exports[entrypointName] === 'function') {
+      __entry = module.exports[entrypointName];
     }
-    if (typeof exports !== 'undefined') {
-      exports['${entrypoint}'] = __entry;
+    
+    // Fallback: check if module.exports itself is the function
+    if (!__entry && typeof module.exports === 'function') {
+      __entry = module.exports;
     }
-    try { globalThis['${entrypoint}'] = __entry; } catch (_) {}
+    
+    // Fallback: check globalThis
+    if (!__entry && typeof globalThis !== 'undefined' && typeof globalThis[entrypointName] === 'function') {
+      __entry = globalThis[entrypointName];
+    }
+    
+    // Fallback: check global
+    if (!__entry && typeof global !== 'undefined' && typeof global[entrypointName] === 'function') {
+      __entry = global[entrypointName];
+    }
+    
+    if (typeof __entry === 'function') {
+      // Ensure it's exported
+      module.exports = module.exports || {};
+      module.exports[entrypointName] = __entry;
+      if (typeof exports !== 'undefined') {
+        exports[entrypointName] = __entry;
+      }
+      if (typeof globalThis !== 'undefined') {
+        try { globalThis[entrypointName] = __entry; } catch (_) {}
+      }
+    }
+  } catch (_err) {
+    // Silently ignore export helper errors
   }
-} catch (_err) {
-  // ignore export helper errors
-}
+})();
 `;
 
     const userCode = `${code}\n\n${exportHelper}`;

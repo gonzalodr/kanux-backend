@@ -370,6 +370,17 @@ export class ChallengeService {
 
     const latestFeedback = submission.challenge_ai_feedback?.[0];
 
+    // Parse feedback JSON if it exists
+    let parsedFeedback = null;
+    if (latestFeedback?.feedback) {
+      try {
+        parsedFeedback = JSON.parse(latestFeedback.feedback);
+      } catch (err) {
+        console.error("Failed to parse feedback JSON", err);
+        parsedFeedback = latestFeedback.feedback;
+      }
+    }
+
     return {
       submission_id: submission.id,
       status: submission.status,
@@ -379,7 +390,7 @@ export class ChallengeService {
         title: submission.challenges?.title,
         difficulty: submission.challenges?.difficulty,
       },
-      feedback: latestFeedback?.feedback || null,
+      feedback: parsedFeedback,
       submitted_at: submission.created_at,
       feedback_generated_at: latestFeedback?.created_at || null,
     };

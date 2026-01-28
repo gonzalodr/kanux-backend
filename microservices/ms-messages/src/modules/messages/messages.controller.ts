@@ -41,10 +41,34 @@ export class MessagesController {
 
       const data = await messagesServices.getConversationMessages(
         req.user.id,
-        id
+        id,
       );
 
       return res.status(200).json(data);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+
+  async markAsRead(req: Request, res: Response) {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { conversationId } = req.params;
+      const { messageIds } = req.body;
+
+      const result = await messagesServices.markMessagesAsRead(
+        req.user.id,
+        conversationId,
+        messageIds,
+      );
+
+      return res.status(200).json({
+        message: "Messages marked as read",
+        ...result,
+      });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
