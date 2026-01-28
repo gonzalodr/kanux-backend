@@ -35,18 +35,19 @@ router.post(
 );
 
 // GET CHALLENGES
+// GET by company (nueva ruta específica)
 router.get(
   "/company/:id_company",
   mockAuthCompany,
-  challengeController.getChallengesByCompany.bind(challengeController), // Necesitarás crear este método
+  challengeController.getChallengesByCompany.bind(challengeController),
 );
 
-// GET all challenges (general)
+// GET all challenges
 router.get("/", challengeController.getChallenges.bind(challengeController));
 
 // GET challenge submissions by company
 router.get(
-  "/:id_challenge/submissions/company/:id_company",
+  "/:id_challenge/submissions/:id_company",
   auth,
   challengeController.getSubmissionsByChallenge.bind(challengeController),
 );
