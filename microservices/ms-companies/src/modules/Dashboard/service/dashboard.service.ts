@@ -1,4 +1,5 @@
 import { prisma } from "../../../lib/prisma";
+import { CandidateResponse } from "../../candidates/dto/candidateResponse.dto";
 
 export class DashboardService {
   async getCompanyDashboardStats(userId: string) {
@@ -23,4 +24,29 @@ export class DashboardService {
       totalUsersParticipated: Number(stats.total_users_participated),
     };
   }
+
+   async getMyCandidates(userId: string): Promise<CandidateResponse[]> {
+      const user = await prisma.users.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          user_type: true,
+        },
+      });
+  
+      if (!user) {
+        throw new Error("USER_NOT_FOUND");
+      }
+  
+      if (user.user_type !== "company") {
+        throw new Error("USER_NOT_ALLOWED");
+      }
+  
+      const candidates = await prisma.$queryRaw<CandidateResponse[]>`
+        select *
+        from public.get_company_candidates_basic(${userId}::uuid);
+      `;
+  
+      return candidates;
+    }
 }

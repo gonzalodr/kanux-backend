@@ -6,5 +6,6 @@ const router = Router();
 const controller = new DashboardController();
 
 router.get("/dashboard", authMiddleware, controller.getCompanyDashboard);
+router.get("/dashboard/candidates", authMiddleware, controller.getMyCandidates);
 
 export default router;
