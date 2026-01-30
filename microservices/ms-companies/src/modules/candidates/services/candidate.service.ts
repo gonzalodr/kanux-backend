@@ -2,7 +2,19 @@ import { prisma } from "../../../lib/prisma";
 import { CandidateResponse } from "../dto/candidateResponse.dto";
 
 export class CandidateService {
-  async getMyCandidates(userId: string): Promise<CandidateResponse[]> {
+  async getMyCandidates(
+    userId: string,
+    page: number = 1,
+    pageSize: number = 10
+  ): Promise<{
+    data: CandidateResponse[];
+    pagination: {
+      page: number;
+      pageSize: number;
+      total: number;
+      totalPages: number;
+    };
+  }> {
     const user = await prisma.users.findUnique({
       where: { id: userId },
       select: {
@@ -19,11 +31,27 @@ export class CandidateService {
       throw new Error("USER_NOT_ALLOWED");
     }
 
-    const candidates = await prisma.$queryRaw<CandidateResponse[]>`
+    const rows = await prisma.$queryRaw<
+      (CandidateResponse & { total_count: number })[]
+    >`
       select *
-      from public.get_company_candidates(${userId}::uuid);
+      from public.get_company_candidates(
+        ${userId}::uuid,
+        ${page}::int,
+        ${pageSize}::int
+      );
     `;
 
-    return candidates;
+    const total = rows.length ? Number(rows[0].total_count) : 0;
+
+    return {
+      data: rows.map(({ total_count, ...candidate }) => candidate),
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize),
+      },
+    };
   }
 }
