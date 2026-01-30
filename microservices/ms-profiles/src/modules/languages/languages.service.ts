@@ -68,4 +68,27 @@ export class LanguagesService {
       where: { id: languageTalentId },
     });
   }
+
+  async updateLanguage(userId: string, languageTalentId: string, payload: Partial<CreateLanguageDto>) {
+    const profileId = await this.getProfileIdByUserId(userId);
+
+    const record = await prisma.languages_talent.findUnique({
+      where: { id: languageTalentId },
+    });
+
+    if (!record) {
+      throw new Error("Language record not found");
+    }
+
+    if (record.id_profile !== profileId) {
+      throw new Error("You do not have permission to update this language");
+    }
+
+    return prisma.languages_talent.update({
+      where: { id: languageTalentId },
+      data: {
+        level:payload.level??"Básico"
+      },
+    });
+  }
 }

@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { CandidateService } from "../services/candidate.service";
 import { AuthRequest } from "../../../types/auth-request";
 
@@ -9,11 +9,16 @@ export class CandidateController {
     try {
       const userId = req.user!.userId;
 
-      const candidates = await candidateService.getMyCandidates(userId);
+      const page = Number(req.query.page) || 1;
+      const pageSize = Number(req.query.pageSize) || 10;
 
-      return res.status(200).json({
-        data: candidates,
-      });
+      const result = await candidateService.getMyCandidates(
+        userId,
+        page,
+        pageSize
+      );
+
+      return res.status(200).json(result);
     } catch (error: any) {
       if (error.message === "USER_NOT_FOUND") {
         return res.status(404).json({
