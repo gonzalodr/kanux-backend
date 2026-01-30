@@ -88,4 +88,32 @@ export class SkillsController {
       res.status(400).json({ message: error.message });
     }
   }
+  async updateSkillByUser(req: Request, res: Response) {
+    try {
+      const userId = req.user!.id;
+
+      const skillId = BigInt(req.params.id);
+
+      const payload = CreateSkillSchema.partial().parse(req.body);
+
+      const updatedSkill = await skillsService.updateSkill(userId, skillId, payload);
+
+      res.json(serializeBigInt(updatedSkill));
+    } catch (error: any) {
+      if (error instanceof ZodError) {
+        return res.status(422).json({
+          message: "Validation error",
+          errors: error.issues.map((e) => ({
+            field: e.path.join("."),
+            message: e.message,
+          })),
+        });
+      }
+
+      if (error instanceof SyntaxError && error.message.includes('BigInt')) {
+        return res.status(400).json({ message: "Invalid Skill ID format" });
+      }
+      res.status(400).json({ message: error.message });
+    }
+  }
 }
