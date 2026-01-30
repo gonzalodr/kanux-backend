@@ -6,7 +6,7 @@ const analyticsService = new AnalyticsService();
 export class AnalyticsController {
   static async getDashboard(req: Request, res: Response) {
     try {
-      const userId = "acf58b47-28a9-435a-b149-ce0c0eacf73a";
+      const userId = req.user?.id;
 
       if (!userId) {
         return res.status(401).json({
