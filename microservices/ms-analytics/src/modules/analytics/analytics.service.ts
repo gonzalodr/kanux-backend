@@ -1,11 +1,22 @@
+// analytics.service.ts
+
 import { prisma } from "../../lib/prisma";
+import {
+  AnalyticsDashboard,
+  AnalyticsSummary,
+  ChallengePerformance,
+  ScoreRange,
+  CandidateQualityTier,
+} from "../../types/analytics.types";
+import {
+  buildScoreDistribution,
+  buildCandidateQuality,
+  buildStatChange,
+} from "../../helpers/analytics.helpers";
 
 export class AnalyticsService {
-  // Helpers
   private async getCompanyIdByUser(userId: string): Promise<string> {
-    const user = await prisma.users.findUnique({
-      where: { id: userId },
-    });
+    const user = await prisma.users.findUnique({ where: { id: userId } });
 
     if (!user || user.user_type !== "company") {
       throw new Error("Unauthorized: company access only");
@@ -22,64 +33,87 @@ export class AnalyticsService {
     return company.id;
   }
 
-  // Public API
-  async getDashboard(userId: string) {
+  async getDashboard(userId: string): Promise<AnalyticsDashboard> {
     const companyId = await this.getCompanyIdByUser(userId);
+
+    const now = new Date();
+    const currentFrom = new Date(now);
+    currentFrom.setDate(now.getDate() - 30);
+
+    const previousFrom = new Date(currentFrom);
+    previousFrom.setDate(currentFrom.getDate() - 30);
 
     const [
       summary,
+      previousSummary,
       challengePerformance,
-      scoreDistribution,
+      scoreDistributionRows,
       topCandidates,
-      candidateQuality,
+      candidateQualityRows,
     ] = await Promise.all([
-      this.getSummary(companyId),
-      this.getChallengePerformance(companyId),
-      this.getScoreDistribution(companyId),
-      this.getTopCandidates(companyId),
-      this.getCandidateQuality(companyId),
+      this.getSummary(companyId, currentFrom, now),
+      this.getSummary(companyId, previousFrom, currentFrom),
+      this.getChallengePerformance(companyId, currentFrom, now),
+      this.getScoreDistribution(companyId, currentFrom, now),
+      this.getTopCandidates(companyId, currentFrom, now),
+      this.getCandidateQuality(companyId, currentFrom, now),
     ]);
 
     return {
       summary,
+      summaryChanges: {
+        totalCandidates: buildStatChange(
+          summary.totalCandidates,
+          previousSummary.totalCandidates,
+        ),
+        completionRate: buildStatChange(
+          summary.completionRate,
+          previousSummary.completionRate,
+        ),
+        activeChallenges: buildStatChange(
+          summary.activeChallenges,
+          previousSummary.activeChallenges,
+        ),
+      },
       challengePerformance,
-      scoreDistribution,
+      scoreDistribution: buildScoreDistribution(scoreDistributionRows),
       topCandidates,
-      candidateQuality,
+      candidateQuality: buildCandidateQuality(candidateQualityRows),
     };
   }
 
-  // Summary
-  private async getSummary(companyId: string) {
+  private async getSummary(
+    companyId: string,
+    from: Date,
+    to: Date,
+  ): Promise<AnalyticsSummary> {
     const [totalSubmissions, totalChallenges, avgScore, maxScore] =
       await Promise.all([
         prisma.challenge_submissions.count({
           where: {
-            challenges: {
-              created_by_company: companyId,
-            },
+            created_at: { gte: from, lt: to },
+            challenges: { created_by_company: companyId },
           },
         }),
         prisma.challenges.count({
           where: {
             created_by_company: companyId,
+            created_at: { gte: from, lt: to },
           },
         }),
         prisma.challenge_submissions.aggregate({
           _avg: { score: true },
           where: {
-            challenges: {
-              created_by_company: companyId,
-            },
+            created_at: { gte: from, lt: to },
+            challenges: { created_by_company: companyId },
             score: { not: null },
           },
         }),
         prisma.challenge_submissions.aggregate({
           _max: { score: true },
           where: {
-            challenges: {
-              created_by_company: companyId,
-            },
+            created_at: { gte: from, lt: to },
+            challenges: { created_by_company: companyId },
             score: { not: null },
           },
         }),
@@ -93,34 +127,35 @@ export class AnalyticsService {
     };
   }
 
-  // Performance por Challenge
-  private async getChallengePerformance(companyId: string) {
-    return prisma.$queryRaw<
-      {
-        challengeId: string;
-        title: string;
-        avgScore: number;
-        submissions: number;
-      }[]
-    >`
-    SELECT
-      c.id as "challengeId",
-      c.title,
-      AVG(cs.score)::int as "avgScore",
-      COUNT(cs.id)::int as submissions
-    FROM challenges c
-    JOIN challenge_submissions cs ON cs.challenge_id = c.id
-    WHERE c.created_by_company = ${companyId}::uuid
-      AND cs.score IS NOT NULL
-    GROUP BY c.id, c.title
-    ORDER BY 3 DESC
-    LIMIT 5;
-  `;
+  private async getChallengePerformance(
+    companyId: string,
+    from: Date,
+    to: Date,
+  ): Promise<ChallengePerformance[]> {
+    return prisma.$queryRaw<ChallengePerformance[]>`
+      SELECT
+        c.id as "challengeId",
+        c.title,
+        AVG(cs.score)::int as "avgScore",
+        COUNT(cs.id)::int as submissions
+      FROM challenges c
+      JOIN challenge_submissions cs ON cs.challenge_id = c.id
+      WHERE c.created_by_company = ${companyId}::uuid
+        AND cs.score IS NOT NULL
+        AND cs.created_at >= ${from}
+        AND cs.created_at < ${to}
+      GROUP BY c.id, c.title
+      ORDER BY "avgScore" DESC
+      LIMIT 5;
+    `;
   }
 
-  // Score Distribution
-  private async getScoreDistribution(companyId: string) {
-    const rows = await prisma.$queryRaw<{ range: string; total: number }[]>`
+  private async getScoreDistribution(
+    companyId: string,
+    from: Date,
+    to: Date,
+  ): Promise<{ range: ScoreRange; total: number }[]> {
+    return prisma.$queryRaw<{ range: ScoreRange; total: number }[]>`
       SELECT
         CASE
           WHEN cs.score >= 90 THEN '90-100'
@@ -134,25 +169,13 @@ export class AnalyticsService {
       JOIN challenges c ON c.id = cs.challenge_id
       WHERE c.created_by_company = ${companyId}::uuid
         AND cs.score IS NOT NULL
+        AND cs.created_at >= ${from}
+        AND cs.created_at < ${to}
       GROUP BY range;
     `;
-
-    interface ScoreDistributionRow {
-      range: string;
-      total: number;
-    }
-
-    return rows.reduce(
-      (acc: Record<string, number>, r: ScoreDistributionRow) => {
-        acc[r.range] = r.total;
-        return acc;
-      },
-      {},
-    );
   }
 
-  // Top Performing Candidates
-  private async getTopCandidates(companyId: string) {
+  private async getTopCandidates(companyId: string, from: Date, to: Date) {
     return prisma.$queryRaw<
       {
         id: string;
@@ -163,52 +186,43 @@ export class AnalyticsService {
     >`
       SELECT
         tp.id,
-        CONCAT(tp.first_name, ' ', tp.last_name) as name,
+        TRIM(CONCAT(tp.first_name, ' ', tp.last_name)) as name,
         MAX(cs.score)::int as score,
-        ARRAY_AGG(DISTINCT s.name) as skills
+        ARRAY_REMOVE(ARRAY_AGG(DISTINCT s.name), NULL) as skills
       FROM talent_profiles tp
       JOIN challenge_submissions cs ON cs.id_profile = tp.id
       JOIN challenges c ON c.id = cs.challenge_id
       LEFT JOIN skills s ON s.id_profile = tp.id
       WHERE c.created_by_company = ${companyId}::uuid
         AND cs.score IS NOT NULL
+        AND cs.created_at >= ${from}
+        AND cs.created_at < ${to}
       GROUP BY tp.id, tp.first_name, tp.last_name
       ORDER BY score DESC
       LIMIT 5;
     `;
   }
 
-  // Candidate Quality Tiers
-  private async getCandidateQuality(companyId: string) {
-    const rows = await prisma.$queryRaw<
-      {
-        tier: string;
-        total: number;
-      }[]
-    >`
-    SELECT
-      CASE
-        WHEN MAX(cs.score) >= 85 THEN 'high'
-        WHEN MAX(cs.score) >= 70 THEN 'medium'
-        ELSE 'low'
-      END as tier,
-      COUNT(*)::int as total
-    FROM challenge_submissions cs
-    JOIN challenges c ON c.id = cs.challenge_id
-    WHERE c.created_by_company = ${companyId}::uuid
-      AND cs.score IS NOT NULL
-    GROUP BY cs.id_profile;
-  `;
-
-    return rows.reduce(
-      (
-        acc: Record<string, number>,
-        r: { tier: string | number; total: number },
-      ) => {
-        acc[r.tier] = (acc[r.tier] ?? 0) + r.total;
-        return acc;
-      },
-      { high: 0, medium: 0, low: 0 },
-    );
+  private async getCandidateQuality(
+    companyId: string,
+    from: Date,
+    to: Date,
+  ): Promise<{ tier: CandidateQualityTier; total: number }[]> {
+    return prisma.$queryRaw<{ tier: CandidateQualityTier; total: number }[]>`
+      SELECT
+        CASE
+          WHEN MAX(cs.score) >= 85 THEN 'high'
+          WHEN MAX(cs.score) >= 70 THEN 'medium'
+          ELSE 'low'
+        END as tier,
+        COUNT(*)::int as total
+      FROM challenge_submissions cs
+      JOIN challenges c ON c.id = cs.challenge_id
+      WHERE c.created_by_company = ${companyId}::uuid
+        AND cs.score IS NOT NULL
+        AND cs.created_at >= ${from}
+        AND cs.created_at < ${to}
+      GROUP BY cs.id_profile;
+    `;
   }
 }
