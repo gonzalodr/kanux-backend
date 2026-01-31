@@ -13,7 +13,8 @@
     "dev:messages": "npm run dev --prefix microservices/ms-messages",
     "dev:gateway": "npm run dev --prefix microservices/ms-gateway",
     "dev:runner": "npm run dev --prefix microservices/ms-runner",
-    "dev:all": "concurrently \"npm run dev:auth\" \"npm run dev:profiles\" \"npm run dev:challenges\" \"npm run dev:companies\" \"npm run dev:subscriptions\" \"npm run dev:messages\" \"npm run dev:feed\" \"npm run dev:gateway\" \"npm run dev:runner\""
+    "dev:analytics": "npm run dev --prefix microservices/ms-analytics",
+    "dev:all": "concurrently \"npm run dev:auth\" \"npm run dev:profiles\" \"npm run dev:challenges\" \"npm run dev:companies\" \"npm run dev:subscriptions\" \"npm run dev:messages\" \"npm run dev:feed\" \"npm run dev:gateway\" \"npm run dev:runner\" \"npm run dev:analytics\""
   },
   "repository": {
     "type": "git",
