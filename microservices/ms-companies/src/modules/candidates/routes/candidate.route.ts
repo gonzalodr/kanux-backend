@@ -11,4 +11,17 @@ router.get(
   controller.getMyCandidates.bind(controller)
 );
 
+router.get(
+  "/candidates/filter",
+  authMiddleware,
+  controller.getMyCandidatesFiltered.bind(controller)
+);
+
+router.get(
+  "/candidates/learning-backgrounds",
+  authMiddleware,
+  controller.getAll.bind(controller)
+);
+
+
 export default router;
