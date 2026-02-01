@@ -12,7 +12,7 @@ export class PlanController {
   async getAllPlansCompany(req: Request, res: Response) {
     try {
       const result = await this.planServices.getAllPlanCompany();
-      return res.status(200).json({ data: result });
+      return res.status(200).json(result);
     } catch (error: any) {
       return res.status(500).json({
         message: "An internal server error occurred while fetching company plans."
@@ -23,7 +23,7 @@ export class PlanController {
   async getAllPlansTalent(req: Request, res: Response) {
     try {
       const result = await this.planServices.getAllPlanTalent();
-      return res.status(200).json({ data: result });
+      return res.status(200).json(result);
     } catch (error: any) {
       return res.status(500).json({
         message: "An internal server error occurred while fetching talent plans."
@@ -36,7 +36,7 @@ export class PlanController {
       // validation
       const validatedPlan = CreateTalentPlanSchema.parse(req.body);
       const result = await this.planServices.createPlanTalent(validatedPlan);
-      return res.status(201).json({ data: result });
+      return res.status(201).json(result);
     } catch (error: any) {
       // Error validation and response
       if (error.name === "ZodError") {
@@ -63,10 +63,7 @@ export class PlanController {
       const result = await this.planServices.createPlanCompany(validatedPlan);
 
       //
-      return res.status(201).json({
-        message: "Company plan created successfully",
-        data: result
-      });
+      return res.status(201).json(result);
 
     } catch (error: any) {
       // Handle Zod validation errors
