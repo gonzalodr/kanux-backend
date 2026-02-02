@@ -179,7 +179,6 @@ export class SubscriptionController {
   async getMySubscriptionCompany(req: Request, res: Response) {
     try {
       const id_user = req.user!.id;
-      console.log(id_user)
       if (!z.uuid().safeParse(id_user).success) {
         return res.status(400).json({ success: false, message: "A valid UUID for Company ID is required" });
       }
