@@ -1,10 +1,25 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { userInfo } from "node:os";
+import { decode } from "node:punycode";
 
 interface JwtPayload {
-  id: string;
+  userId: string;
   email: string;
-  role: string;
+  userType: string;
+  id:string;
+  role?: string;
+  sessionId?: string;
+  iat: number;
+  exp: number;
+}
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: JwtPayload;
+    }
+  }
 }
 
 export function authMiddleware(
@@ -20,11 +35,20 @@ export function authMiddleware(
 
   const token = authHeader.split(" ")[1];
 
+  if (!token) {
+    return res.status(401).json({ message: "Invalid authorization format" });
+  }
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET!
+    ) as JwtPayload;
     req.user = decoded;
     next();
-  } catch (error) {
-    return res.status(401).json({ message: "Invalid token" });
+  } catch (error: any) {
+    return res.status(401).json({ 
+      message: "Invalid token",
+      error: error.message 
+    });
   }
 }
