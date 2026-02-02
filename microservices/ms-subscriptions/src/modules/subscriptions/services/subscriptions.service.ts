@@ -13,24 +13,24 @@ export class SubscriptionServices {
         return { start, end };
     }
 
-    async subscribeCompany(id_company: string, plan_id: string, data: CreateCompanySubscriptionDto) {
+    async subscribeCompany(id_user: string, plan_id: string, data: CreateCompanySubscriptionDto) {
         const validatePlan = await prisma.company_plans.findUnique({ where: { id: plan_id } });
         if (!validatePlan) throw new Error("The company plan does not exist");
 
-        const validateCompany = await prisma.company.findUnique({ where: { id: id_company } });
+        const validateCompany = await prisma.company.findUnique({ where: { id_user: id_user } });
         if (!validateCompany) throw new Error("The company does not exist");
 
         const { start, end } = this.getSubscriptionDates();
 
         return await prisma.$transaction(async (tx) => {
             await tx.company_subscriptions.updateMany({
-                where: { company_id: id_company, status: SubscriptionStatus.ACTIVE },
+                where: { company_id: validateCompany.id, status: SubscriptionStatus.ACTIVE },
                 data: { status: SubscriptionStatus.INACTIVE }
             });
             // create the subscription
             const subscription = await tx.company_subscriptions.create({
                 data: {
-                    company_id: id_company,
+                    company_id: validateCompany.id,
                     plan_id: plan_id,
                     status: data.status,
                     start_date: start,
@@ -39,7 +39,7 @@ export class SubscriptionServices {
             });
 
             //create the plan usage
-            const existingUsage = await tx.company_plan_usage.findFirst({ where: { company_id: id_company } });
+            const existingUsage = await tx.company_plan_usage.findFirst({ where: { company_id: validateCompany.id } });
             //update plan usage for company
             if (existingUsage) {
                 await tx.company_plan_usage.update({
@@ -54,7 +54,7 @@ export class SubscriptionServices {
             } else {
                 await tx.company_plan_usage.create({
                     data: {
-                        company_id: id_company,
+                        company_id: validateCompany.id,
                         profile_views_used: 0,
                         challenges_created: 0,
                         period_start: start,
@@ -66,11 +66,11 @@ export class SubscriptionServices {
         });
     }
 
-    async subscribeTalent(id_profile: string, plan_id: string, data: CreateTalentSubscriptionDto) {
+    async subscribeTalent(id_user: string, plan_id: string, data: CreateTalentSubscriptionDto) {
         const validatePlan = await prisma.talent_plans.findUnique({ where: { id: plan_id } });
         if (!validatePlan) throw new Error("The talent plan does not exist");
 
-        const validateProfile = await prisma.talent_profiles.findUnique({ where: { id: id_profile } });
+        const validateProfile = await prisma.talent_profiles.findUnique({ where: { user_id: id_user } });
         if (!validateProfile) throw new Error("The talent profile does not exist");
 
         const now = new Date();
@@ -79,7 +79,7 @@ export class SubscriptionServices {
 
         return await prisma.talent_subscriptions.create({
             data: {
-                id_profile: id_profile,
+                id_profile: validateProfile.id,
                 plan_id: plan_id,
                 status: data.status,
                 start_date: now,
@@ -201,18 +201,21 @@ export class SubscriptionServices {
         });
     }
 
-    async upgradeCompanySubscription(id_company: string, new_plan_id: string, data: CreateCompanySubscriptionDto) {
-        return this.subscribeCompany(id_company, new_plan_id, data);
+    async upgradeCompanySubscription(id_user: string, new_plan_id: string, data: CreateCompanySubscriptionDto) {
+        return this.subscribeCompany(id_user, new_plan_id, data);
     }
 
-    async upgradeTalentSubscription(id_profile: string, new_plan_id: string, data: CreateTalentSubscriptionDto) {
-        return this.subscribeTalent(id_profile, new_plan_id, data);
+    async upgradeTalentSubscription(id_user: string, new_plan_id: string, data: CreateTalentSubscriptionDto) {
+        return this.subscribeTalent(id_user, new_plan_id, data);
     }
 
-    async getCompanySubscription(id_company: string) {
+    async getCompanySubscription(id_user: string) {
+        const validateCompany = await prisma.company.findUnique({ where: { id_user: id_user } });
+        if (!validateCompany) throw new Error("The company does not exist");
+
         const subscription = await prisma.company_subscriptions.findFirst({
             where: {
-                company_id: id_company,
+                company_id: validateCompany.id,
                 status: SubscriptionStatus.ACTIVE
             },
             include: {
@@ -227,7 +230,7 @@ export class SubscriptionServices {
         if (!subscription) return null;
 
         const usage = await prisma.company_plan_usage.findFirst({
-            where: { company_id: id_company }
+            where: { company_id: validateCompany.id }
         });
 
         return {
@@ -236,10 +239,13 @@ export class SubscriptionServices {
         };
     }
 
-    async getTalentSubscription(id_profile: string) {
+    async getTalentSubscription(id_user: string) {
+        const validateProfile = await prisma.talent_profiles.findUnique({ where: { user_id: id_user } });
+        if (!validateProfile) throw new Error("The talent profile does not exist");
+        
         return await prisma.talent_subscriptions.findFirst({
             where: {
-                id_profile: id_profile,
+                id_profile: validateProfile.id,
                 status: SubscriptionStatus.ACTIVE
             },
             include: {

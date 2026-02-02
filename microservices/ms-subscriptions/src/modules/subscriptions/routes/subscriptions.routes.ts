@@ -1,10 +1,12 @@
 import { Router } from "express";
 import { SubscriptionController } from "../controller/subscriptions.controller";
+import { authMiddleware } from "../../../middlewares/auth.middleware";
+
 const router = Router();
 const subscriptionController = new SubscriptionController();
 
-router.post("/talent/:id_profile/plan/:id_plan",subscriptionController.subscribeTalent.bind(subscriptionController));
-router.post("/company/:id_company/plan/:id_plan",subscriptionController.subscribeCompany.bind(subscriptionController));
+router.post("/talent/plan/:id_plan",authMiddleware,subscriptionController.subscribeTalent.bind(subscriptionController));
+router.post("/company/plan/:id_plan",authMiddleware,subscriptionController.subscribeCompany.bind(subscriptionController));
 /**
  * Query Params: ?action=VIEW_PROFILE
  */
@@ -17,18 +19,18 @@ router.patch("/company/:id_company/usage/profile-view", subscriptionController.i
 router.patch("/company/:id_company/usage/challenge", subscriptionController.incrementChallenge.bind(subscriptionController));
 
 // --- (GET) ---
-// get subscription
-router.get("/company/:id_company/my-subscription", subscriptionController.getMySubscriptionCompany.bind(subscriptionController));
+// get subscription company
+router.get("/company/my-subscription",authMiddleware,subscriptionController.getMySubscriptionCompany.bind(subscriptionController));
 
-// get subscription
-router.get("/talent/:id_profile/my-subscription", subscriptionController.getMySubscriptionTalent.bind(subscriptionController));
+// get subscription taleent
+router.get("/talent/my-subscription", authMiddleware, subscriptionController.getMySubscriptionTalent.bind(subscriptionController));
 
 
 // --- (PUT) ---
 // update subscription
-router.put("/company/:id_company/upgrade/:id_plan", subscriptionController.upgradeCompany.bind(subscriptionController));
+router.put("/company/upgrade/:id_plan",authMiddleware, subscriptionController.upgradeCompany.bind(subscriptionController));
 
 // update subscription
-router.put("/talent/:id_profile/upgrade/:id_plan", subscriptionController.upgradeTalent.bind(subscriptionController));
+router.put("/talent/upgrade/:id_plan",authMiddleware, subscriptionController.upgradeTalent.bind(subscriptionController));
 
 export default router;
