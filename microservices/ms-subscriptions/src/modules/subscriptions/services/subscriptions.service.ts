@@ -3,6 +3,7 @@ import { CreateCompanySubscriptionDto } from "../dto/companySubscription.dto";
 import { CreateTalentSubscriptionDto } from "../dto/talentSubscription.dto";
 import { SubscriptionStatus } from "../enums/subscriptionStatus.enum";
 import { CompanyActionType } from "../enums/actionType.enum";
+import { includes } from "zod";
 
 export class SubscriptionServices {
 
@@ -261,7 +262,11 @@ export class SubscriptionServices {
                 status: SubscriptionStatus.ACTIVE
             },
             include: {
-                talent_plans: true
+                talent_plans:{
+                    include:{
+                        talent_plan_features: true
+                    }
+                }
             }
         });
     }
