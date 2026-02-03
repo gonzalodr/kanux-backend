@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import axios from "axios"; // Necesitarás instalar axios o usar fetch
 import { CompanyActionType } from "../modules/subscriptions/enums/actionType.enum";
 
-// URL base de tu microservicio de suscripciones (usualmente viene de variables de entorno)
+// url base
 const SUBSCRIPTION_SERVICE_URL = process.env.SUBSCRIPTION_SERVICE_URL || "http://localhost";
 const PORT = process.env.MS_SUBSCRIPTIONS_PORT || 3005;
 
