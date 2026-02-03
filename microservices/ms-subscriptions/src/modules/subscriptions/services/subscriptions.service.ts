@@ -73,18 +73,30 @@ export class SubscriptionServices {
         const validateProfile = await prisma.talent_profiles.findUnique({ where: { user_id: id_user } });
         if (!validateProfile) throw new Error("The talent profile does not exist");
 
-        const now = new Date();
-        const oneMonthLater = new Date();
-        oneMonthLater.setMonth(now.getMonth() + 1);
+        const { start, end } = this.getSubscriptionDates();
 
-        return await prisma.talent_subscriptions.create({
-            data: {
-                id_profile: validateProfile.id,
-                plan_id: plan_id,
-                status: data.status,
-                start_date: now,
-                end_date: oneMonthLater,
-            }
+        return await prisma.$transaction(async (tx) => {
+            // invalidate old subs
+            await tx.talent_subscriptions.updateMany({
+                where: {
+                    id_profile: validateProfile.id,
+                    status: SubscriptionStatus.ACTIVE
+                },
+                data: { status: SubscriptionStatus.INACTIVE }
+            });
+
+            // create new subs
+            const subscription = await tx.talent_subscriptions.create({
+                data: {
+                    id_profile: validateProfile.id,
+                    plan_id: plan_id,
+                    status: data.status || SubscriptionStatus.ACTIVE,
+                    start_date: start,
+                    end_date: end,
+                }
+            });
+
+            return subscription;
         });
     }
 
@@ -242,7 +254,7 @@ export class SubscriptionServices {
     async getTalentSubscription(id_user: string) {
         const validateProfile = await prisma.talent_profiles.findUnique({ where: { user_id: id_user } });
         if (!validateProfile) throw new Error("The talent profile does not exist");
-        
+
         return await prisma.talent_subscriptions.findFirst({
             where: {
                 id_profile: validateProfile.id,
