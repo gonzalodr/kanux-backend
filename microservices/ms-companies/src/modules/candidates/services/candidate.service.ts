@@ -123,4 +123,44 @@ export class CandidateService {
 
     return learningBackgrounds;
   }
+  async getTalentProfileSummaryByCompany(
+    userId: string,           
+    talentProfileId: string  
+  ): Promise<{
+    talent_id: string;
+    talent_profile: any;
+    skills: any[];
+    avg_score: number | null;
+  } | null> {
+
+    const comp = await prisma.company.findUnique({
+      where: { id: userId },
+    });
+
+    if (!comp) {
+      throw new Error("COMP_NOT_FOUND");
+    }
+
+    const rows = await prisma.$queryRaw<
+      {
+        talent_id: string;
+        talent_profile: any;
+        skills: any[];
+        avg_score: number | null;
+        total_count: number;
+      }[]
+    >`
+      select *
+      from public.get_talent_profile_summary_by_company(
+        ${talentProfileId}::uuid,
+        ${userId}::uuid
+      );
+    `;
+
+    if (!rows.length) return null;
+
+    const { total_count, ...data } = rows[0];
+
+    return data;
+  }
 }

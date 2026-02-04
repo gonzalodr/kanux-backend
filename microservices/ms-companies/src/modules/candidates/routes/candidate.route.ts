@@ -23,5 +23,10 @@ router.get(
   controller.getAll.bind(controller)
 );
 
+router.get(
+  "/:compId/:talentProfileId/summary",
+  authMiddleware,
+  controller.getTalentProfileSummary.bind(controller)
+);
 
 export default router;
