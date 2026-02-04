@@ -9,7 +9,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/plans", planRoutes);
-app.use("/subscriptions", subscriptionRoutes);
+app.use("/", subscriptionRoutes);
 
 app.get("/health", (_req, res) => {
   res.json({

@@ -7,15 +7,16 @@ import { z } from 'zod'
 
 export class SubscriptionController {
 
-  private subscribtionServices: SubscriptionServices;
+  private subscriptionServices: SubscriptionServices;
 
   constructor() {
-    this.subscribtionServices = new SubscriptionServices();
+    this.subscriptionServices = new SubscriptionServices();
   }
 
   async subscribeCompany(req: Request, res: Response) {
     try {
-      const { id_company, id_plan } = req.params;
+      const { id_plan } = req.params;
+      const id_user = req.user!.id;
 
       if (!req.body || Object.keys(req.body).length === 0) {
         return res.status(400).json({
@@ -23,7 +24,7 @@ export class SubscriptionController {
         });
       }
 
-      if (!z.uuid().safeParse(id_company).success) {
+      if (!z.uuid().safeParse(id_user).success) {
         return res.status(400).json({ message: "A valid UUID for Company ID is required" });
       }
       if (!z.uuid().safeParse(id_plan).success) {
@@ -32,16 +33,13 @@ export class SubscriptionController {
 
       const validatedData = CreateCompanySubscriptionSchema.parse(req.body);
 
-      const result = await this.subscribtionServices.subscribeCompany(
-        id_company,
+      const result = await this.subscriptionServices.subscribeCompany(
+        id_user,
         id_plan,
         validatedData
       );
 
-      return res.status(201).json({
-        message: "Company subscribed successfully",
-        data: result
-      });
+      return res.status(201).json(result);
 
     } catch (error: any) {
       // Handle Zod Validation Errors
@@ -60,7 +58,8 @@ export class SubscriptionController {
 
   async subscribeTalent(req: Request, res: Response) {
     try {
-      const { id_profile, id_plan } = req.params;
+      const { id_plan } = req.params;
+      const id_user = req.user!.id;
 
       if (!req.body || Object.keys(req.body).length === 0) {
         return res.status(400).json({
@@ -68,7 +67,7 @@ export class SubscriptionController {
         });
       }
       // Manual UUID Validation for parameters
-      if (!z.uuid().safeParse(id_profile).success) {
+      if (!z.uuid().safeParse(id_user).success) {
         return res.status(400).json({ message: "A valid UUID for Profile ID is required" });
       }
       if (!z.uuid().safeParse(id_plan).success) {
@@ -77,12 +76,10 @@ export class SubscriptionController {
 
       const validatedData = CreateTalentSubscriptionSchema.parse(req.body);
 
-      const result = await this.subscribtionServices.subscribeTalent(id_profile, id_plan, validatedData);
+      const result = await this.subscriptionServices.subscribeTalent(id_user, id_plan, validatedData);
 
-      return res.status(201).json({
-        message: "Talent subscription created successfully",
-        data: result
-      });
+      return res.status(201).json(result);
+
     } catch (error: any) {
       // Handle Zod Validation Errors
       if (error.name === "ZodError") {
@@ -97,6 +94,7 @@ export class SubscriptionController {
       return res.status(500).json({ message: error.message });
     }
   }
+
   async validateActionCompany(req: Request, res: Response) {
     try {
       const { id_company } = req.params;
@@ -120,7 +118,7 @@ export class SubscriptionController {
       }
 
       // consult to services
-      const result = await this.subscribtionServices.validateActionOfCompany(id_company, action as CompanyActionType);
+      const result = await this.subscriptionServices.validateActionOfCompany(id_company, action as CompanyActionType);
 
       // Handle Business response 
       if (!result.allowed) {
@@ -154,11 +152,11 @@ export class SubscriptionController {
         return res.status(400).json({ success: false, message: "A valid UUID for Company ID is required" });
       }
 
-      await this.subscribtionServices.incrementProfileViewUsage(id_company);
+      await this.subscriptionServices.incrementProfileViewUsage(id_company);
 
-      return res.status(200).json({success: true,message: "Profile view count incremented successfully"});
+      return res.status(200).json({ success: true, message: "Profile view count incremented successfully" });
     } catch (error: any) {
-      return res.status(500).json({success: false,message: error.message || "Failed to increment profile view usage"});
+      return res.status(500).json({ success: false, message: error.message || "Failed to increment profile view usage" });
     }
   }
 
@@ -170,11 +168,76 @@ export class SubscriptionController {
         return res.status(400).json({ success: false, message: "A valid UUID for Company ID is required" });
       }
 
-      await this.subscribtionServices.incrementChallengeUsage(id_company);
+      await this.subscriptionServices.incrementChallengeUsage(id_company);
 
-      return res.status(200).json({success: true,message: "Challenge count incremented successfully"});
+      return res.status(200).json({ success: true, message: "Challenge count incremented successfully" });
     } catch (error: any) {
-      return res.status(500).json({success: false,message: error.message || "Failed to increment challenge usage"});
+      return res.status(500).json({ success: false, message: error.message || "Failed to increment challenge usage" });
+    }
+  }
+
+  async getMySubscriptionCompany(req: Request, res: Response) {
+    try {
+      const id_user = req.user!.id;
+      if (!z.uuid().safeParse(id_user).success) {
+        return res.status(400).json({ success: false, message: "A valid UUID for Company ID is required" });
+      }
+
+      const result = await this.subscriptionServices.getCompanySubscription(id_user);
+      
+      if (!result) {
+        return res.status(404).json({success: false, message:"No active subscription found for this company"});
+      }
+
+      return res.status(200).json({ success: true, data: result });
+    } catch (error: any) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  async getMySubscriptionTalent(req: Request, res: Response) {
+    try {
+      const id_user = req.user!.id;
+      if (!z.uuid().safeParse(id_user).success) {
+        return res.status(400).json({ success: false, message: "A valid UUID for Profile ID is required" });
+      }
+
+      const result = await this.subscriptionServices.getTalentSubscription(id_user);
+      if (!result) {
+        return res.status(404).json({ success: false, message: "No active subscription found for this talent" });
+      }
+
+      return res.status(200).json({ success: true, data: result });
+    } catch (error: any) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  async upgradeCompany(req: Request, res: Response) {
+    try {
+      const { id_plan } = req.params;
+      const id_user = req.user!.id;
+      const validatedData = CreateCompanySubscriptionSchema.parse(req.body);
+
+      const result = await this.subscriptionServices.upgradeCompanySubscription(id_user, id_plan, validatedData);
+      return res.status(200).json({ success: true, message: "Subscription upgraded successfully", data: result });
+    } catch (error: any) {
+      if (error.name === "ZodError") return res.status(400).json({ message: "Validation failed", errors: error.errors });
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  async upgradeTalent(req: Request, res: Response) {
+    try {
+      const { id_plan } = req.params;
+      const id_user = req.user!.id;
+      const validatedData = CreateTalentSubscriptionSchema.parse(req.body);
+
+      const result = await this.subscriptionServices.upgradeTalentSubscription(id_user, id_plan, validatedData);
+      return res.status(200).json({ success: true, message: "Subscription upgraded successfully", data: result });
+    } catch (error: any) {
+      if (error.name === "ZodError") return res.status(400).json({ message: "Validation failed", errors: error.errors });
+      return res.status(500).json({ success: false, message: error.message });
     }
   }
 }

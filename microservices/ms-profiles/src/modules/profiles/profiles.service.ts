@@ -116,7 +116,7 @@ export class ProfilesService {
         throw new Error("Failed to upload profile image");
       }
     }
-    
+
     const {
       first_name,
       last_name,
@@ -142,7 +142,7 @@ export class ProfilesService {
         education,
         about,
         contact,
-        image_url:imageProfileUrl,
+        image_url: imageProfileUrl,
         ...(learning_background_id && {
           learning_backgrounds: {
             connect: { id: learning_background_id },
@@ -179,24 +179,59 @@ export class ProfilesService {
       const existingUser = await prisma.users.findUnique({ where: { id: userId } });
       if (!existingUser) { throw new Error("The associated user was not found."); }
 
-      const newProfile = await prisma.talent_profiles.update({
-        where: { user_id: userId },
-        data: {
-          first_name: data.first_name,
-          last_name: data.last_name,
-          title: data.title,
-          location: data.location,
-          experience_level: data.experience_level,
-          education: data.education,
-          about: data.about,
-          contact: data.contact,
-        },
-        include: {
-          users: true
-        }
+      const freePlan = await prisma.talent_plans.findFirst({
+        where: { price_monthly:"0"}
       });
 
-      const { users, ...profileData } = newProfile;
+      if (!freePlan) throw new Error("Free plan configuration not found.");
+
+      // transaction
+      const result = await prisma.$transaction(async (tx) => {
+        // update profile
+        const updatedProfile = await tx.talent_profiles.update({
+          where: { user_id: userId },
+          data: {
+            first_name: data.first_name,
+            last_name: data.last_name,
+            title: data.title,
+            location: data.location,
+            experience_level: data.experience_level,
+            education: data.education,
+            about: data.about,
+            contact: data.contact,
+          },
+          include: { users: true }
+        });
+
+        // verify subscription
+        const existingSub = await tx.talent_subscriptions.findFirst({
+          where: {
+            id_profile: updatedProfile.id,
+            status: "active"
+          }
+        });
+
+        // create subscription
+        if (!existingSub) {
+          const now = new Date();
+          const oneMonthLater = new Date();
+          oneMonthLater.setMonth(now.getMonth() + 1);
+
+          await tx.talent_subscriptions.create({
+            data: {
+              id_profile: updatedProfile.id,
+              plan_id: freePlan.id,
+              status: 'active',
+              start_date: now,
+              end_date: oneMonthLater,
+            }
+          });
+        }
+
+        return updatedProfile;
+      });
+
+      const { users, ...profileData } = result;
 
       return {
         success: true,
