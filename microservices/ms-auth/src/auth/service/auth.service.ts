@@ -7,6 +7,26 @@ import { JwtUtil } from "../../utils/security/jwt.util";
 import { SessionManager } from "../../utils/security/session.manager";
 import { talent_profiles, company } from "@prisma/client";
 
+type PlanFeatures = {
+  plan: {
+    id: string | null;
+    name: string | null;
+    price_monthly: number | null;
+  };
+  features: {
+    can_contact_talent?: boolean;
+    can_use_advanced_filters?: boolean;
+    can_create_custom_challenges?: boolean;
+    can_access_metrics?: boolean;
+    can_access_reports?: boolean;
+
+    can_access_basic_challenges?: boolean;
+    can_access_advanced_challenges?: boolean;
+    can_access_detailed_reports?: boolean;
+  };
+};
+
+
 interface LoginDTO {
   email: string;
   password: string;
@@ -59,7 +79,7 @@ export class AuthService {
           email: user.email,
           userType: user.user_type,
         },
-        deviceId
+        deviceId,
       );
 
       return {
@@ -115,6 +135,16 @@ export class AuthService {
     const profile =
       user.user_type === "company" ? user.company : user.talent_profiles;
 
+    let plan: PlanFeatures | null = null;
+
+    if (user.user_type === "company" && user.company?.id) {
+      plan = await this.getCompanyPlanFeatures(user.company.id);
+    }
+
+    if (user.user_type === "talent" && user.talent_profiles?.id) {
+      plan = await this.getTalentPlanFeatures(user.talent_profiles.id);
+    }
+
     return {
       token,
       sessionId,
@@ -124,6 +154,7 @@ export class AuthService {
         userType: user.user_type,
         profile: profile,
       },
+      plan,
     };
   }
 
@@ -162,4 +193,34 @@ export class AuthService {
       expiresAt: new Date(s.expiresAt),
     }));
   }
+
+  static async getCompanyPlanFeatures(
+    companyId: string,
+  ): Promise<PlanFeatures | null> {
+    const result = await prisma.$queryRaw<{ plan: PlanFeatures | null }[]>`
+    select public.get_company_active_plan_features(${companyId}::uuid) as plan
+  `;
+
+    return result[0]?.plan ?? null;
+  }
+
+  static async getTalentPlanFeatures(
+    profileId: string,
+  ): Promise<PlanFeatures | null> {
+    const result = await prisma.$queryRaw<{ plan: PlanFeatures | null }[]>`
+    select public.get_talent_active_plan_features(${profileId}::uuid) as plan
+  `;
+
+    return result[0]?.plan ?? null;
+  }
+}
+
+async function getCompanyPlanFeatures(
+  companyId: string,
+): Promise<PlanFeatures | null> {
+  const result = await prisma.$queryRaw<{ plan: PlanFeatures | null }[]>`
+    select public.get_company_active_plan_features(${companyId}::uuid) as plan
+  `;
+
+  return result[0]?.plan ?? null;
 }
