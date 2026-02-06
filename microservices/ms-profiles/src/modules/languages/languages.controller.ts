@@ -56,4 +56,31 @@ export class LanguagesController {
       res.status(400).json({ message: error.message });
     }
   }
+
+  async updateLanguage(req: Request, res: Response) {
+    try {
+      const userId = req.user!.id;
+      const { id } = req.params;
+
+      const payload = CreateLanguageSchema.partial().parse(req.body);
+
+      const updatedLanguage = await languagesService.updateLanguage(userId, id, payload);
+
+      res.json(serializeBigInt(updatedLanguage));
+    } catch (error: any) {
+      if (error instanceof ZodError) {
+        return res.status(422).json({
+          message: "Validation error",
+          errors: error.issues.map((e) => ({
+            field: e.path.join("."),
+            message: e.message,
+          })),
+        });
+      }
+
+      res.status(400).json({ 
+        message: error.message || "Unexpected error" 
+      });
+    }
+  }
 }

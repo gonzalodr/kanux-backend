@@ -26,7 +26,7 @@ router.post(
 router.post(
   "/company/:id_company",
   auth,
-  permissionCompany,
+  // permissionCompany,
   challengeController.createChallenges.bind(challengeController),
 );
 router.post(

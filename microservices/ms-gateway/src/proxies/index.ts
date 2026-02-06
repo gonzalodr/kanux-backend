@@ -1,4 +1,4 @@
-import { config } from '../config/env';
+import { config } from "../config/env";
 
 export interface ProxyConfig {
   context: string | string[];
@@ -10,36 +10,41 @@ export const proxyConfigs: ProxyConfig[] = [
   {
     context: config.services.auth.context,
     target: config.services.auth.url,
-    pathRewrite: { '^/auth': '' },
+    pathRewrite: { "^/auth": "" },
   },
   {
     context: config.services.profiles.context,
     target: config.services.profiles.url,
-    pathRewrite: { '^/profiles': '' },
+    pathRewrite: { "^/profiles": "" },
   },
   {
     context: config.services.challenges.context,
     target: config.services.challenges.url,
-    pathRewrite: { '^/challenges': '' },
+    pathRewrite: { "^/challenges": "" },
   },
   {
     context: config.services.companies.context,
     target: config.services.companies.url,
-    pathRewrite: { '^/companies': '' },
+    pathRewrite: { "^/companies": "" },
   },
   {
     context: config.services.subscriptions.context,
     target: config.services.subscriptions.url,
-    pathRewrite: { '^/subscriptions': '' },
+    pathRewrite: { "^/subscriptions": "" },
   },
   {
     context: config.services.messages.context,
     target: config.services.messages.url,
-    pathRewrite: { '^/messages': '' },
+    pathRewrite: { "^/messages": "" },
   },
   {
     context: config.services.feed.context,
     target: config.services.feed.url,
-    pathRewrite: { '^/feed': '' },
+    pathRewrite: { "^/feed": "" },
+  },
+  {
+    context: config.services.analytics.context,
+    target: config.services.analytics.url,
+    pathRewrite: { "^/analytics": "" },
   },
 ];

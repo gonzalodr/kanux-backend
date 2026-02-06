@@ -11,4 +11,22 @@ router.get(
   controller.getMyCandidates.bind(controller)
 );
 
+router.get(
+  "/candidates/filter",
+  authMiddleware,
+  controller.getMyCandidatesFiltered.bind(controller)
+);
+
+router.get(
+  "/candidates/learning-backgrounds",
+  authMiddleware,
+  controller.getAll.bind(controller)
+);
+
+router.get(
+  "/:compId/:talentProfileId/summary",
+  authMiddleware,
+  controller.getTalentProfileSummary.bind(controller)
+);
+
 export default router;

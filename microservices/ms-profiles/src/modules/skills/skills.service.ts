@@ -71,29 +71,53 @@ export class SkillsService {
     });
   }
   async getSkillsForFilter() {
-  return prisma.skills.findMany({
-    select: {
-      id: true,
-      name: true,
-    },
-    orderBy: {
-      name: "asc",
-    },
-  });
-}
-
-async getSubSkillsByCategory(parentCategoryId: string) {
-  return prisma.skills.findMany({
-    where: {
-      category: {
-        parent_child: parentCategoryId,
+    return prisma.skills.findMany({
+      select: {
+        id: true,
+        name: true,
       },
-    },
-    include: {
-      category: true,
-    },
-  });
-}
+      orderBy: {
+        name: "asc",
+      },
+    });
+  }
+
+  async getSubSkillsByCategory(parentCategoryId: string) {
+    return prisma.skills.findMany({
+      where: {
+        category: {
+          parent_child: parentCategoryId,
+        },
+      },
+      include: {
+        category: true,
+      },
+    });
+  }
+  async updateSkill(userId: string, skillId: bigint, payload: Partial<CreateSkillDto>) {
+    const profileId = await this.getProfileIdByUserId(userId);
+
+    const skill = await prisma.skills.findUnique({
+      where: { id: skillId },
+    });
+
+    if (!skill) {
+      throw new Error("Skill not found");
+    }
+
+    if (skill.id_profile !== profileId) {
+      throw new Error("You do not have permission to update this skill");
+    }
+
+    return prisma.skills.update({
+      where: { id: skillId },
+      data: {
+        id_category: payload.category_id,
+        name: payload.name,
+        level: payload.level,
+      },
+    });
+  }
 
 
 }
