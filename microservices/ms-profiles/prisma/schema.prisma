@@ -13,6 +13,7 @@ model category {
   name           String     @unique @db.VarChar
   parent_child   String?    @db.Uuid
   created_at     DateTime   @default(now()) @db.Timestamptz(6)
+  type_category  String?    @default("soft") @db.VarChar
   category       category?  @relation("categoryTocategory", fields: [parent_child], references: [id], onDelete: NoAction, onUpdate: NoAction)
   other_category category[] @relation("categoryTocategory")
   skills         skills[]
