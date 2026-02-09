@@ -346,17 +346,6 @@ export class ChallengeService {
             challenge_type: true,
           },
         },
-        challenge_ai_feedback: {
-          select: {
-            id: true,
-            feedback: true,
-            created_at: true,
-          },
-          orderBy: {
-            created_at: "desc",
-          },
-          take: 1,
-        },
       },
     });
 
@@ -368,13 +357,28 @@ export class ChallengeService {
       throw new Error("UNAUTHORIZED_SUBMISSION");
     }
 
-    const latestFeedback = submission.challenge_ai_feedback?.[0];
+    const latestFeedback = await prisma.challenge_ai_feedback.findFirst({
+      where: { submission_id: submissionId },
+      select: {
+        id: true,
+        feedback: true,
+        created_at: true,
+      },
+      orderBy: {
+        created_at: "desc",
+      },
+    });
 
-    // Parse feedback JSON if it exists
-    let parsedFeedback = null;
+    let parsedFeedback: any = null;
     if (latestFeedback?.feedback) {
       try {
         parsedFeedback = JSON.parse(latestFeedback.feedback);
+        if (typeof parsedFeedback?.markdown === "string") {
+          parsedFeedback.markdown = parsedFeedback.markdown.replace(
+            /\r?\n/g,
+            " ",
+          );
+        }
       } catch (err) {
         console.error("Failed to parse feedback JSON", err);
         parsedFeedback = latestFeedback.feedback;
@@ -390,7 +394,13 @@ export class ChallengeService {
         title: submission.challenges?.title,
         difficulty: submission.challenges?.difficulty,
       },
-      feedback: parsedFeedback,
+      feedback: latestFeedback
+        ? {
+            id: latestFeedback.id,
+            feedback: parsedFeedback,
+            created_at: latestFeedback.created_at,
+          }
+        : null,
       submitted_at: submission.created_at,
       feedback_generated_at: latestFeedback?.created_at || null,
     };

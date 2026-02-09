@@ -30,7 +30,7 @@ router.post(
 // Get submission result with feedback
 router.get(
   "/:submissionId/result",
-  auth,
+  mockAuth,
   controller.getSubmissionResult.bind(controller),
 );
 

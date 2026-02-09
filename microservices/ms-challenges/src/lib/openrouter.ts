@@ -1,7 +1,5 @@
 import axios from "axios";
 
-const apiKey = process.env.OPENROUTER_API_KEY || "";
-
 export type ChatMessage = {
   role: "system" | "user" | "assistant";
   content:
@@ -17,6 +15,10 @@ export async function sendChat(
   messages: ChatMessage[],
   options?: { model?: string; stream?: boolean },
 ) {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
+    throw new Error("OPENROUTER_API_KEY is not set");
+  }
   const model =
     options?.model || process.env.OPENROUTER_MODEL || "allenai/molmo-2-8b:free";
   const resp = await axios.post(
