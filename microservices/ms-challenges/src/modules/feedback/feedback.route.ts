@@ -5,6 +5,7 @@ const router = Router();
 const controller = new FeedbackController();
 
 router.post("/:submissionId/generate", controller.generate.bind(controller));
+router.get("/:submissionId/latest", controller.latest.bind(controller));
 router.get("/:submissionId", controller.list.bind(controller));
 
 export default router;

@@ -20,7 +20,7 @@ export async function sendChat(
     throw new Error("OPENROUTER_API_KEY is not set");
   }
   const model =
-    options?.model || process.env.OPENROUTER_MODEL || "allenai/molmo-2-8b:free";
+    options?.model || process.env.OPENROUTER_MODEL || "openrouter/free";
   const resp = await axios.post(
     "https://openrouter.ai/api/v1/chat/completions",
     {

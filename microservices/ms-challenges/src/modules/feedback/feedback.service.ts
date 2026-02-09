@@ -154,6 +154,24 @@ export class FeedbackService {
     return this.generateAndStoreWithTestResults(submissionId, undefined);
   }
 
+  async latest(submissionId: string) {
+    const row = await prisma.challenge_ai_feedback.findFirst({
+      where: { submission_id: submissionId },
+      orderBy: { created_at: "desc" },
+    });
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      id: row.id,
+      submission_id: row.submission_id,
+      feedback: safeParseJson(row.feedback || ""),
+      created_at: row.created_at,
+    };
+  }
+
   async list(submissionId: string) {
     const rows = await prisma.challenge_ai_feedback.findMany({
       where: { submission_id: submissionId },
