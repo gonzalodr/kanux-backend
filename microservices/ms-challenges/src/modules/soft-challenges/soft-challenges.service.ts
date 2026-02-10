@@ -204,8 +204,6 @@ export class SoftChallengesService {
       answers,
     );
 
-    const feedback = this.generateFeedback(score);
-
     if (existingSubmission?.status === "started") {
       const submission = await this.finalizeStartedSubmission(
         existingSubmission.id,
@@ -218,7 +216,6 @@ export class SoftChallengesService {
         score,
         correctCount,
         totalQuestions,
-        feedback,
       );
     }
 
@@ -229,7 +226,6 @@ export class SoftChallengesService {
       score,
       correctCount,
       totalQuestions,
-      feedback,
     );
   }
 
@@ -414,17 +410,6 @@ export class SoftChallengesService {
   }
 
   /**
-   * Translates numeric score into human feedback.
-   * Keeps business rules centralized and easy to change.
-   */
-  private generateFeedback(score: number): string {
-    if (score === 100) return "¡Excelente! Dominas perfectamente este tema.";
-    if (score >= 80) return "¡Muy bien! Tienes un nivel avanzado.";
-    if (score >= 60) return "Bien, pero puedes mejorar algunos conceptos.";
-    return "Sigue practicando para mejorar.";
-  }
-
-  /**
    * Persists submission and answers in a single transaction.
    * Guarantees atomicity: all data is saved or nothing is saved.
    * Marks as evaluated immediately with calculated score, then refines with AI in background.
@@ -469,14 +454,12 @@ export class SoftChallengesService {
     score: number,
     correctCount: number,
     totalQuestions: number,
-    feedback: string,
   ) {
     return {
       submission_id: submissionId,
       score,
       total_questions: totalQuestions,
       correct_answers: correctCount,
-      feedback,
     };
   }
 
@@ -505,17 +488,17 @@ export class SoftChallengesService {
           },
         });
         console.log(
-          `AI improved score for ${submissionId}: ${initialScore} → ${feedback.final_score}`,
+          `[✓] AI improved score for ${submissionId}: ${initialScore} → ${feedback.final_score}`,
         );
       } else if (feedback?.final_score != null) {
         console.log(
-          `AI score ${feedback.final_score} not higher than calculated score ${initialScore}, keeping calculated score`,
+          `[•] AI feedback generated but score ${feedback.final_score} not higher than initial ${initialScore}, keeping initial score`,
         );
       }
     } catch (err) {
       console.error(
-        "Background AI feedback processing failed, keeping calculated score",
-        err,
+        `[!] Background AI feedback processing failed for ${submissionId}:`,
+        err instanceof Error ? err.message : err,
       );
     }
   }

@@ -171,7 +171,10 @@ export class ChallengeController {
   }
   async getSubmissionResult(req: Request, res: Response) {
     try {
-      const userId = req.user!.id;
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      const userId = req.user.id;
       const { submissionId } = req.params;
 
       if (!z.uuid().safeParse(submissionId).success) {
