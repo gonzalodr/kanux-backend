@@ -188,11 +188,57 @@ export class FeedbackService {
 
 function safeParseJson(text: string) {
   try {
-    const start = text.indexOf("{");
-    const end = text.lastIndexOf("}");
-    const slice = start >= 0 && end > start ? text.slice(start, end + 1) : text;
+    const normalized = normalizeJsonText(text);
+    const start = normalized.indexOf("{");
+    const end = normalized.lastIndexOf("}");
+    const slice =
+      start >= 0 && end > start ? normalized.slice(start, end + 1) : normalized;
     return JSON.parse(slice);
   } catch {
     return { raw: text };
   }
+}
+
+function normalizeJsonText(text: string) {
+  let output = text.trim();
+
+  // Strip code fences if the model wrapped the JSON.
+  output = output.replace(/```(?:json)?/gi, "").replace(/```/g, "");
+
+  // Repair YAML-style block scalar for markdown if present.
+  output = replaceMarkdownBlockScalar(output);
+
+  return output;
+}
+
+function replaceMarkdownBlockScalar(input: string) {
+  const match = input.match(
+    /"markdown"\s*:\s*\|\s*([\s\S]*?)(\n\s*"\w+"\s*:|\n\s*}\s*$)/,
+  );
+
+  if (!match) {
+    return input;
+  }
+
+  const block = match[1].replace(/\s+$/, "");
+  const tail = match[2];
+  const lines = block.split(/\r?\n/);
+
+  if (lines.length > 0 && lines[0].trim() === "") {
+    lines.shift();
+  }
+
+  const indents = lines
+    .filter((line) => line.trim().length > 0)
+    .map((line) => (line.match(/^\s*/) || [""])[0].length);
+  const minIndent = indents.length ? Math.min(...indents) : 0;
+
+  const deindented = lines.map((line) => line.slice(minIndent)).join("\n");
+  const escaped = deindented
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, "\\\"")
+    .replace(/\r?\n/g, "\\n");
+
+  const replacement = `"markdown":"${escaped}"${tail}`;
+  return input.replace(match[0], replacement);
 }

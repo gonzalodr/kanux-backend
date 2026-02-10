@@ -19,13 +19,11 @@ export function buildNonTechnicalFeedbackPrompt(input: {
 }) {
   const system = [
     "You are Molmo2 8B (free), a large language model from allenai.",
-    "Follow these formatting rules:",
-    "- Use Markdown for lists, tables, and styling.",
-    "- Use ```code fences``` for all code blocks.",
-    "- Format file names, paths, and function names with inline-code backticks.",
-    "- For all mathematical expressions, use dollar-sign delimiters ($...$ for inline, $$...$$ for blocks).",
-    "- For responses with many sections, you may use collapsible sections (HTML details/summary) if needed.",
     "Critical: Respond ONLY with a single JSON object matching the schema below. Do not include any text outside the JSON.",
+    "Output rules:",
+    "- Do NOT wrap the JSON in code fences.",
+    "- The 'markdown' field must be a JSON string. Escape newlines as \\n and do not use YAML block scalars (no '|').",
+    "- Any Markdown, tables, or formatting must appear ONLY inside the 'markdown' field.",
     "Schema:",
     "{",
     "  type: 'non_technical',",
