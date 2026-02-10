@@ -58,46 +58,48 @@ export class CommentService {
 
     return { message: "Comentario eliminado correctamente." };
   }
-async  getCommentsByPost(postId: string) {
-  const comments = await prisma.post_comments.findMany({
-    where: { post_id: postId },
-    orderBy: { created_at: "desc" }, 
-    include: {
-      talent_profiles: {
-        include: {
-          talent_profiles: true,
-          company: true,
+  async getCommentsByPost(postId: string) {
+    const comments = await prisma.post_comments.findMany({
+      where: { post_id: postId },
+      orderBy: { created_at: "desc" },
+      include: {
+        talent_profiles: {
+          include: {
+            talent_profiles: true,
+            company: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  return comments.map((c) => {
-    const profile = c.talent_profiles;
-    let author = null;
+    return comments.map((c) => {
+      const profile = c.talent_profiles;
+      let author = null;
 
-    if (profile?.talent_profiles) {
-      author = {
-        id: profile.id,
-        first_name: profile.talent_profiles.first_name ?? null,
-        last_name: profile.talent_profiles.last_name ?? null,
-        title: profile.talent_profiles.title ?? null,
+      if (profile?.talent_profiles) {
+        author = {
+          id: profile.id,
+          first_name: profile.talent_profiles.first_name ?? null,
+          last_name: profile.talent_profiles.last_name ?? null,
+          title: profile.talent_profiles.title ?? null,
+          image_url: profile.talent_profiles.image_url ?? null,
+        };
+      } else if (profile?.company) {
+        author = {
+          id: profile.id,
+          first_name: profile.company.name ?? null,
+          last_name: null,
+          title: null,
+          image_url: profile.company.url_logo ?? null,
+        };
+      }
+
+      return {
+        id: c.id,
+        content: c.content,
+        created_at: c.created_at,
+        author,
       };
-    } else if (profile?.company) {
-      author = {
-        id: profile.id,
-        first_name: profile.company.name ?? null,
-        last_name: null,
-        title: null,
-      };
-    }
-
-    return {
-      id: c.id,
-      content: c.content,
-      created_at: c.created_at,
-      author,
-    };
-  });
-}
+    });
+  }
 }
