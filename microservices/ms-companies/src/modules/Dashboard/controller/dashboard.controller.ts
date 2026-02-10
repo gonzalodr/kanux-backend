@@ -12,7 +12,6 @@ export class DashboardController {
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
-
       const stats = await dashboardService.getCompanyDashboardStats(userId);
       return res.status(200).json({
         success: true,
@@ -52,4 +51,42 @@ export class DashboardController {
         });
       }
     }
+   async getProfileViewsStatus(req: AuthRequest, res: Response) {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const status =
+      await dashboardService.getProfileViewsStatus(userId);
+
+    if (!status) {
+      return res.status(404).json({
+        success: false,
+        message: "No active plan found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        viewsUsed: status.viewsUsed,
+        maxViews: status.maxViews,
+        periodStart: status.periodStart,
+        periodEnd: status.periodEnd, 
+      },
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message:
+        error.message || "Error fetching profile views status",
+    });
+  }
+}
 }

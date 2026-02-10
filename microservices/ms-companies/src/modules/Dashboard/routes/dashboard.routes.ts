@@ -7,5 +7,5 @@ const controller = new DashboardController();
 
 router.get("/dashboard", authMiddleware, controller.getCompanyDashboard);
 router.get("/dashboard/candidates", authMiddleware, controller.getMyCandidates);
-
+router.get("/dashboard/getViewUsed", authMiddleware, controller.getProfileViewsStatus);
 export default router;

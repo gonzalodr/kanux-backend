@@ -5,7 +5,7 @@ export class CandidateService {
   async getMyCandidates(
     userId: string,
     page: number = 1,
-    pageSize: number = 10
+    pageSize: number = 10,
   ): Promise<{
     data: CandidateResponse[];
     pagination: {
@@ -54,7 +54,7 @@ export class CandidateService {
       },
     };
   }
-   async getMyCandidatesFiltered(
+  async getMyCandidatesFiltered(
     userId: string,
     filters: {
       searchText?: string;
@@ -62,7 +62,7 @@ export class CandidateService {
       learningBackgroundId?: string;
     },
     page: number = 1,
-    pageSize: number = 10
+    pageSize: number = 10,
   ): Promise<{
     data: CandidateResponse[];
     pagination: {
@@ -124,19 +124,18 @@ export class CandidateService {
     return learningBackgrounds;
   }
   async getTalentProfileSummaryByCompany(
-    userId: string,           
-    talentProfileId: string  
+    userId: string,
+    talentProfileId: string,
   ): Promise<{
     talent_id: string;
     talent_profile: any;
     skills: any[];
     avg_score: number | null;
+    allowed: boolean;
   } | null> {
-
     const comp = await prisma.company.findUnique({
       where: { id: userId },
     });
-
     if (!comp) {
       throw new Error("COMP_NOT_FOUND");
     }
@@ -158,9 +157,22 @@ export class CandidateService {
     `;
 
     if (!rows.length) return null;
+    const allowed = await consumeProfileView(userId);
 
     const { total_count, ...data } = rows[0];
 
-    return data;
+    return {
+      allowed,
+      ...data
+    };
   }
 }
+
+export async function consumeProfileView(companyId: string): Promise<boolean> {
+  const result = await prisma.$queryRaw<{ allowed: boolean }[]>`
+   select  public.consume_company_profile_view(${companyId}::uuid) as allowed
+  `;
+console.log("result");
+  return result[0]?.allowed ?? false;
+}
+
