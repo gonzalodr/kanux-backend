@@ -127,6 +127,7 @@ export class FeedService {
           first_name: profile.talent_profiles.first_name ?? null,
           last_name: profile.talent_profiles.last_name ?? null,
           title: profile.talent_profiles.title ?? null,
+          image_url: profile.talent_profiles.image_url ?? null,
         };
       } else if (profile?.company) {
         author = {
@@ -134,6 +135,7 @@ export class FeedService {
           first_name: profile.company.name ?? null,
           last_name: null,
           title: null,
+          image_url: profile.company.url_logo ?? null,
         };
       }
 
@@ -148,6 +150,7 @@ export class FeedService {
               first_name: cAuthorProfile.talent_profiles.first_name ?? null,
               last_name: cAuthorProfile.talent_profiles.last_name ?? null,
               title: cAuthorProfile.talent_profiles.title ?? null,
+              image_url: cAuthorProfile.talent_profiles.image_url ?? null,
             };
           } else if (cAuthorProfile?.company) {
             commentAuthor = {
@@ -155,6 +158,7 @@ export class FeedService {
               first_name: cAuthorProfile.company.name ?? null,
               last_name: null,
               title: null,
+              image_url: cAuthorProfile.company.url_logo ?? null,
             };
           }
 
@@ -178,6 +182,7 @@ export class FeedService {
               first_name: rAuthorProfile.talent_profiles.first_name ?? null,
               last_name: rAuthorProfile.talent_profiles.last_name ?? null,
               title: rAuthorProfile.talent_profiles.title ?? null,
+              image_url: rAuthorProfile.talent_profiles.image_url ?? null,
             };
           } else if (rAuthorProfile?.company) {
             reactionAuthor = {
@@ -185,6 +190,7 @@ export class FeedService {
               first_name: rAuthorProfile.company.name ?? null,
               last_name: null,
               title: null,
+              image_url: rAuthorProfile.company.url_logo ?? null,
             };
           }
 
@@ -265,6 +271,7 @@ export class FeedService {
           first_name: profile.talent_profiles.first_name ?? null,
           last_name: profile.talent_profiles.last_name ?? null,
           title: profile.talent_profiles.title ?? null,
+          image_url: profile.talent_profiles.image_url ?? null,
         };
       } else if (profile?.company) {
         author = {
@@ -272,6 +279,7 @@ export class FeedService {
           first_name: profile.company.name ?? null,
           last_name: null,
           title: null,
+          image_url: profile.company.url_logo ?? null,
         };
       }
 
@@ -286,6 +294,7 @@ export class FeedService {
               first_name: cProfile.talent_profiles.first_name ?? null,
               last_name: cProfile.talent_profiles.last_name ?? null,
               title: cProfile.talent_profiles.title ?? null,
+              image_url: cProfile.talent_profiles.image_url ?? null,
             };
           } else if (cProfile?.company) {
             commentAuthor = {
@@ -293,6 +302,7 @@ export class FeedService {
               first_name: cProfile.company.name ?? null,
               last_name: null,
               title: null,
+              image_url: cProfile.company.url_logo ?? null,
             };
           }
 
@@ -316,6 +326,7 @@ export class FeedService {
               first_name: rProfile.talent_profiles.first_name ?? null,
               last_name: rProfile.talent_profiles.last_name ?? null,
               title: rProfile.talent_profiles.title ?? null,
+              image_url: rProfile.talent_profiles.image_url ?? null,
             };
           } else if (rProfile?.company) {
             reactionAuthor = {
@@ -323,6 +334,7 @@ export class FeedService {
               first_name: rProfile.company.name ?? null,
               last_name: null,
               title: null,
+              image_url: rProfile.company.url_logo ?? null,
             };
           }
 
