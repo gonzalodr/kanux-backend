@@ -1,0 +1,44 @@
+{
+  "test_cases": [
+    {
+      "id": 1,
+      "input": {
+        "str": "hola"
+      },
+      "expected_output": "aloh",
+      "description": "Invertir palabra simple"
+    },
+    {
+      "id": 2,
+      "input": {
+        "str": "JavaScript"
+      },
+      "expected_output": "tpircSavaJ",
+      "description": "Invertir con mayúsculas"
+    },
+    {
+      "id": 3,
+      "input": {
+        "str": "12345"
+      },
+      "expected_output": "54321",
+      "description": "Invertir números como string"
+    },
+    {
+      "id": 4,
+      "input": {
+        "str": "hola mundo"
+      },
+      "expected_output": "odnum aloh",
+      "description": "Invertir con espacios"
+    },
+    {
+      "id": 5,
+      "input": {
+        "str": "a"
+      },
+      "expected_output": "a",
+      "description": "Invertir un solo carácter"
+    }
+  ]
+}

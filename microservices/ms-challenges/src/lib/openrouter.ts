@@ -1,0 +1,40 @@
+import axios from "axios";
+
+export type ChatMessage = {
+  role: "system" | "user" | "assistant";
+  content:
+    | string
+    | Array<
+        | { type: "text"; text: string }
+        | { type: "image_url"; image_url: { url: string } }
+        | { type: "video_url"; video_url: { url: string } }
+      >;
+};
+
+export async function sendChat(
+  messages: ChatMessage[],
+  options?: { model?: string; stream?: boolean },
+) {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
+    throw new Error("OPENROUTER_API_KEY is not set");
+  }
+  const model =
+    options?.model || process.env.OPENROUTER_MODEL || "openrouter/free";
+  const resp = await axios.post(
+    "https://openrouter.ai/api/v1/chat/completions",
+    {
+      model,
+      messages,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": process.env.APP_URL || "http://localhost",
+        "X-Title": process.env.APP_NAME || "Kanux Challenges",
+      },
+    },
+  );
+  return resp.data;
+}

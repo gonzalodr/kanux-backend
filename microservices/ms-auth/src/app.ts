@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import authRoutes from "./auth/routes/auth.routes";
 
 const app = express();
 
@@ -9,8 +10,10 @@ app.use(express.json());
 app.get("/health", (_req, res) => {
   res.json({
     service: "ms-auth",
-    status: "ok"
+    status: "ok",
   });
 });
+
+app.use("/", authRoutes);
 
 export default app;

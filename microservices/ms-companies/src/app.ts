@@ -1,5 +1,11 @@
 import express from "express";
 import cors from "cors";
+import companyRouters from './modules/company/routes/company.routes'
+import talentRouters from './modules/talent/routes/talent.routes'
+import metricRouters from './modules/metrics/routes/metrics.routes'
+import contactRouters from './modules/contact/routes/contact.routes'
+import dashRoutes from './modules/Dashboard/routes/dashboard.routes'
+import candidateRoute from  './modules/candidates/routes/candidate.route'
 
 const app = express();
 
@@ -9,8 +15,14 @@ app.use(express.json());
 app.get("/health", (_req, res) => {
   res.json({
     service: "ms-companies",
-    status: "ok"
+    status: "ok",
   });
 });
 
+app.use('/company',companyRouters)
+app.use('/company/metrics',metricRouters)
+app.use('/company/talent',talentRouters)
+app.use('/company/contact',contactRouters)
+app.use('/company', dashRoutes)
+app.use('/company', candidateRoute)
 export default app;

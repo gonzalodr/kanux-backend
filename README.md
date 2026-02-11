@@ -29,7 +29,7 @@ KANUX-BACKEND/
 │   ├── ms-companies/
 │   ├── ms-subscriptions/
 │   ├── ms-chat/
-│   └── ms-api-gateway/
+│   └── ms-gateway/
 │
 ├── .env.example
 ├── .gitignore
@@ -78,7 +78,7 @@ All client requests must go through the API Gateway.
 
 Detailed documentation can be found here:
 
-microservices/ms-api-gateway/README.md
+microservices/ms-gateway/README.md
 
 ---
 
@@ -120,7 +120,7 @@ npm install
 > ms-companies \
 > ms-subscriptions \
 > ms-chat \
-> ms-api-gateway
+> ms-gateway
 
 **node_modules are not committed and must be installed locally.**
 

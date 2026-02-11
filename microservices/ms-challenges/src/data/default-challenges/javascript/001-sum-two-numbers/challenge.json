@@ -1,0 +1,17 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440001",
+  "title": "Suma de Dos Números",
+  "description": "Escribe una función que tome dos números como parámetros y retorne su suma.\n\n**Ejemplo:**\n```javascript\nsumar(5, 3) // retorna 8\nsumar(-2, 7) // retorna 5\nsumar(0, 0) // retorna 0\n```",
+  "challenge_type": "Técnico",
+  "difficulty": "Básico",
+  "duration_minutes": 10,
+  "programming_language": "javascript",
+  "constraints": [
+    "Los números pueden ser positivos, negativos o cero",
+    "El resultado debe ser un número",
+    "No uses operadores ternarios innecesarios"
+  ],
+  "initial_code": "function sumar(a, b) {\n  // Tu código aquí\n}",
+  "solution_template": "function sumar(a, b) {\n  return a + b;\n}",
+  "tags": ["matemáticas", "básico", "operadores"]
+}

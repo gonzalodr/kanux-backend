@@ -1,0 +1,52 @@
+{
+  "test_cases": [
+    {
+      "id": 1,
+      "input": {
+        "n": 0
+      },
+      "expected_output": 0,
+      "description": "Fibonacci de 0"
+    },
+    {
+      "id": 2,
+      "input": {
+        "n": 1
+      },
+      "expected_output": 1,
+      "description": "Fibonacci de 1"
+    },
+    {
+      "id": 3,
+      "input": {
+        "n": 5
+      },
+      "expected_output": 5,
+      "description": "Fibonacci de 5"
+    },
+    {
+      "id": 4,
+      "input": {
+        "n": 10
+      },
+      "expected_output": 55,
+      "description": "Fibonacci de 10"
+    },
+    {
+      "id": 5,
+      "input": {
+        "n": 15
+      },
+      "expected_output": 610,
+      "description": "Fibonacci de 15"
+    },
+    {
+      "id": 6,
+      "input": {
+        "n": 20
+      },
+      "expected_output": 6765,
+      "description": "Fibonacci de 20"
+    }
+  ]
+}

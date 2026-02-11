@@ -1,0 +1,373 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model category {
+  id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String     @unique @db.VarChar
+  parent_child   String?    @db.Uuid
+  created_at     DateTime   @default(now()) @db.Timestamptz(6)
+  category       category?  @relation("categoryTocategory", fields: [parent_child], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_category category[] @relation("categoryTocategory")
+  skills         skills[]
+}
+
+model challenge_ai_feedback {
+  id                    String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  submission_id         String?                @db.Uuid
+  feedback              String?
+  created_at            DateTime?              @default(now()) @db.Timestamp(6)
+  challenge_submissions challenge_submissions? @relation(fields: [submission_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model challenge_submissions {
+  id                              String                            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  challenge_id                    String?                           @db.Uuid
+  id_profile                      String?                           @db.Uuid
+  status                          String?                           @default("submitted") @db.VarChar(50)
+  score                           Int?
+  evaluation_type                 String                            @db.VarChar(50)
+  created_at                      DateTime?                         @default(now()) @db.Timestamp(6)
+  challenge_ai_feedback           challenge_ai_feedback[]
+  challenges                      challenges?                       @relation(fields: [challenge_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  talent_profiles                 talent_profiles?                  @relation(fields: [id_profile], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  non_technical_answers           non_technical_answers[]
+  technical_challenge_submissions technical_challenge_submissions[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model challenges {
+  id                           String                         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  title                        String                         @db.VarChar(150)
+  description                  String?
+  challenge_type               String                         @db.VarChar(50)
+  difficulty                   String                         @db.VarChar(50)
+  duration_minutes             Int?
+  created_by_company           String?                        @db.Uuid
+  created_at                   DateTime?                      @default(now()) @db.Timestamp(6)
+  challenge_submissions        challenge_submissions[]
+  company                      company?                       @relation(fields: [created_by_company], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  non_technical_challenges     non_technical_challenges[]
+  technical_challenge_metadata technical_challenge_metadata[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model company {
+  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                  String?                 @db.VarChar
+  about                 String?
+  id_user               String                  @unique @db.Uuid
+  location              String?                 @db.VarChar
+  contact               Json?
+  url_logo              String?
+  goal                  String?
+  created_at            DateTime                @default(now()) @db.Timestamptz(6)
+  challenges            challenges[]
+  users                 users                   @relation(fields: [id_user], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  company_plan_usage    company_plan_usage[]
+  company_subscriptions company_subscriptions[]
+  conversations         conversations[]
+}
+
+model company_plan_features {
+  id                           String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  plan_id                      String?        @db.Uuid
+  max_profile_views_per_month  Int?
+  can_contact_talent           Boolean?       @default(false)
+  can_use_advanced_filters     Boolean?       @default(false)
+  can_create_custom_challenges Boolean?       @default(false)
+  can_access_metrics           Boolean?       @default(false)
+  can_access_reports           Boolean?       @default(false)
+  created_at                   DateTime?      @default(now()) @db.Timestamp(6)
+  company_plans                company_plans? @relation(fields: [plan_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model company_plan_usage {
+  id                 String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  company_id         String?   @db.Uuid
+  profile_views_used Int?      @default(0)
+  challenges_created Int?      @default(0)
+  period_start       DateTime? @db.Date
+  period_end         DateTime? @db.Date
+  company            company?  @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model company_plans {
+  id                    String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                  String                  @unique @db.VarChar(50)
+  description           String?
+  price_monthly         Decimal?                @default(0) @db.Decimal(10, 2)
+  created_at            DateTime?               @default(now()) @db.Timestamp(6)
+  company_plan_features company_plan_features[]
+  company_subscriptions company_subscriptions[]
+}
+
+model company_subscriptions {
+  id            String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  company_id    String?        @db.Uuid
+  plan_id       String?        @db.Uuid
+  status        String?        @default("active") @db.VarChar(20)
+  start_date    DateTime?      @default(now()) @db.Timestamp(6)
+  end_date      DateTime?      @db.Timestamp(6)
+  company       company?       @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  company_plans company_plans? @relation(fields: [plan_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model conversations {
+  id              String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  company_id      String?          @db.Uuid
+  id_profile      String?          @db.Uuid
+  created_at      DateTime?        @default(now()) @db.Timestamp(6)
+  last_message_at DateTime?        @db.Timestamp(6)
+  company         company?         @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  talent_profiles talent_profiles? @relation(fields: [id_profile], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  messages        messages[]
+
+  @@unique([company_id, id_profile], name:"conversations_company_profile_unique" ,map: "conversations_company_profile_unique")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model languages {
+  id               String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name             String             @unique @db.VarChar(100)
+  languages_talent languages_talent[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model languages_talent {
+  id              String           @id(map: "languages_user_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_profile      String?          @db.Uuid
+  id_languages    String?          @db.Uuid
+  created_at      DateTime         @default(now()) @db.Timestamptz(6)
+  level           String           @db.VarChar
+  languages       languages?       @relation(fields: [id_languages], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "languages_user_id_languages_fkey")
+  talent_profiles talent_profiles? @relation(fields: [id_profile], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "languages_user_id_profile_fkey")
+}
+
+model learning_backgrounds {
+  id              String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name            String            @unique @db.VarChar(100)
+  talent_profiles talent_profiles[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model message_read_receipts {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  message_id  String?   @db.Uuid
+  reader_type String?   @db.VarChar(20)
+  reader_id   String?   @db.Uuid
+  read_at     DateTime? @default(now()) @db.Timestamp(6)
+  messages    messages? @relation(fields: [message_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model messages {
+  id                    String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  conversation_id       String?                 @db.Uuid
+  sender_type           String                  @db.VarChar(20)
+  sender_id             String                  @db.Uuid
+  content               String
+  is_read               Boolean?                @default(false)
+  created_at            DateTime?               @default(now()) @db.Timestamp(6)
+  message_read_receipts message_read_receipts[]
+  conversations         conversations?          @relation(fields: [conversation_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model non_technical_answers {
+  id                             String                          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  submission_id                  String?                         @db.Uuid
+  question_id                    String?                         @db.Uuid
+  selected_option_id             String?                         @db.Uuid
+  non_technical_questions        non_technical_questions?        @relation(fields: [question_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  non_technical_question_options non_technical_question_options? @relation(fields: [selected_option_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  challenge_submissions          challenge_submissions?          @relation(fields: [submission_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model non_technical_challenges {
+  id                      String                    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  challenge_id            String?                   @db.Uuid
+  instructions            String?
+  challenges              challenges?               @relation(fields: [challenge_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  non_technical_questions non_technical_questions[]
+}
+
+model non_technical_question_options {
+  id                      String                   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  question_id             String?                  @db.Uuid
+  option_text             String?
+  is_correct              Boolean?                 @default(false)
+  non_technical_answers   non_technical_answers[]
+  non_technical_questions non_technical_questions? @relation(fields: [question_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model non_technical_questions {
+  id                             String                           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  non_technical_challenge_id     String?                          @db.Uuid
+  question                       String
+  question_type                  String                           @db.VarChar(50)
+  non_technical_answers          non_technical_answers[]
+  non_technical_question_options non_technical_question_options[]
+  non_technical_challenges       non_technical_challenges?        @relation(fields: [non_technical_challenge_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model notifications {
+  id             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  recipient_type String    @db.VarChar(20)
+  recipient_id   String    @db.Uuid
+  type           String    @db.VarChar(50)
+  title          String    @db.VarChar(255)
+  message        String
+  metadata       Json?
+  is_read        Boolean?  @default(false)
+  created_at     DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model opportunity_statuses {
+  id              String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name            String            @unique @db.VarChar(100)
+  talent_profiles talent_profiles[]
+}
+
+model post_comments {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  post_id    String?   @db.Uuid
+  id_profile String?   @db.Uuid
+  content    String?
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  users      users?    @relation(fields: [id_profile], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  posts      posts?    @relation(fields: [post_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model post_reactions {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  post_id       String?   @db.Uuid
+  id_profile    String?   @db.Uuid
+  reaction_type String?   @default("like") @db.VarChar(20)
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+  users         users?    @relation(fields: [id_profile], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  posts         posts?    @relation(fields: [post_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([post_id, id_profile])
+}
+
+model posts {
+  id             String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  id_profile     String?          @db.Uuid
+  content        String
+  created_at     DateTime?        @default(now()) @db.Timestamp(6)
+  post_comments  post_comments[]
+  post_reactions post_reactions[]
+  users          users?           @relation(fields: [id_profile], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model skills {
+  id              BigInt          @id @default(autoincrement())
+  id_profile      String          @db.Uuid
+  id_category     String          @db.Uuid
+  created_at      DateTime        @default(now()) @db.Timestamptz(6)
+  level           String?         @db.VarChar
+  name            String          @db.VarChar(150)
+  category        category        @relation(fields: [id_category], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  talent_profiles talent_profiles @relation(fields: [id_profile], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([id_profile, id_category, name], map: "skills_unique_per_user")
+}
+
+model talent_plan_features {
+  id                             String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  plan_id                        String?       @db.Uuid
+  can_access_basic_challenges    Boolean?      @default(true)
+  can_access_advanced_challenges Boolean?      @default(false)
+  can_access_detailed_reports    Boolean?      @default(false)
+  created_at                     DateTime?     @default(now()) @db.Timestamp(6)
+  talent_plans                   talent_plans? @relation(fields: [plan_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model talent_plans {
+  id                   String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                 String                 @unique @db.VarChar(50)
+  description          String?
+  price_monthly        Decimal?               @default(0) @db.Decimal(10, 2)
+  created_at           DateTime?              @default(now()) @db.Timestamp(6)
+  talent_plan_features talent_plan_features[]
+  talent_subscriptions talent_subscriptions[]
+}
+
+model talent_profiles {
+  id                     String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id                String                  @unique @db.Uuid
+  title                  String?                 @db.VarChar(150)
+  location               String?                 @db.VarChar(100)
+  experience_level       String?                 @db.VarChar(50)
+  learning_background_id String?                 @db.Uuid
+  opportunity_status_id  String?                 @db.Uuid
+  education              String?
+  about                  String?
+  profile_completeness   Int?                    @default(0)
+  created_at             DateTime?               @default(now()) @db.Timestamp(6)
+  contact                Json?
+  first_name             String?                 @db.VarChar
+  last_name              String?                 @db.VarChar
+  challenge_submissions  challenge_submissions[]
+  conversations          conversations[]
+  languages_talent       languages_talent[]
+  skills                 skills[]
+  learning_backgrounds   learning_backgrounds?   @relation(fields: [learning_background_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  opportunity_statuses   opportunity_statuses?   @relation(fields: [opportunity_status_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users                  users                   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  talent_subscriptions   talent_subscriptions[]
+}
+
+model talent_subscriptions {
+  id              String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  id_profile      String?          @db.Uuid
+  plan_id         String?          @db.Uuid
+  status          String?          @default("active") @db.VarChar(20)
+  start_date      DateTime?        @default(now()) @db.Timestamp(6)
+  end_date        DateTime?        @db.Timestamp(6)
+  talent_profiles talent_profiles? @relation(fields: [id_profile], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  talent_plans    talent_plans?    @relation(fields: [plan_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model technical_challenge_metadata {
+  id              String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  challenge_id    String?     @db.Uuid
+  source          String?     @default("KANUX_JSON") @db.VarChar(50)
+  evaluation_type String?     @default("simulated") @db.VarChar(50)
+  challenges      challenges? @relation(fields: [challenge_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model technical_challenge_submissions {
+  id                    String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  submission_id         String?                @db.Uuid
+  programming_language  String?                @db.VarChar(50)
+  source_code           String
+  created_at            DateTime?              @default(now()) @db.Timestamp(6)
+  challenge_submissions challenge_submissions? @relation(fields: [submission_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model users {
+  id              String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email           String           @unique @db.VarChar(255)
+  password_hash   String
+  user_type       String           @db.VarChar(20)
+  created_at      DateTime?        @default(now()) @db.Timestamp(6)
+  company         company?
+  post_comments   post_comments[]
+  post_reactions  post_reactions[]
+  posts           posts[]
+  talent_profiles talent_profiles?
+}

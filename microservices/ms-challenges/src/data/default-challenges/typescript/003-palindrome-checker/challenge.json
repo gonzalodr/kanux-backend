@@ -1,0 +1,18 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440003",
+  "title": "Verificador de Palíndromos",
+  "description": "Escribe una función que determine si una cadena es un palíndromo (se lee igual de izquierda a derecha que de derecha a izquierda).\n\n**Ejemplo:**\n```typescript\nesPalindromo('ana') // retorna true\nesPalindromo('hola') // retorna false\nesPalindromo('A man a plan a canal Panama') // retorna true (ignorando espacios y mayúsculas)\n```",
+  "challenge_type": "Técnico",
+  "difficulty": "Intermedio",
+  "duration_minutes": 20,
+  "programming_language": "typescript",
+  "constraints": [
+    "Ignora los espacios en blanco",
+    "Ignora mayúsculas y minúsculas",
+    "Solo considera letras y números",
+    "Retorna un boolean"
+  ],
+  "initial_code": "export function esPalindromo(str: string): boolean {\n  // Tu código aquí\n  return false;\n}",
+  "solution_template": "export function esPalindromo(str: string): boolean {\n  const cleaned = str.toLowerCase().replace(/[^a-z0-9]/g, '');\n  return cleaned === cleaned.split('').reverse().join('');\n}",
+  "tags": ["strings", "algoritmos", "lógica"]
+}
